@@ -15,11 +15,32 @@ import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarCheck, UserCheck, Clock, Search, Plus, RefreshCw } from 'lucide-react';
 
+// Mapeamento consistente entre colunas e status do backend
 const columnsConfig = [
-  { id: 'novo_lead', title: 'Novos Leads' },
-  { id: 'agendado', title: 'Agendados' },
-  { id: 'compareceu', title: 'Compareceram' },
-  { id: 'em_espera', title: 'Em Espera' },
+  { 
+    id: 'novo_lead', 
+    title: 'Novos Leads',
+    status: 'novo_lead',
+    attended: false 
+  },
+  { 
+    id: 'agendado', 
+    title: 'Agendados',
+    status: 'agendado',
+    attended: false 
+  },
+  { 
+    id: 'compareceu', 
+    title: 'Compareceram',
+    status: null, // Mantém o status atual, apenas marca como attended
+    attended: true 
+  },
+  { 
+    id: 'em_espera', 
+    title: 'Em Espera',
+    status: 'em_espera',
+    attended: false 
+  },
 ];
 
 export default function Pipeline() {
@@ -115,56 +136,74 @@ export default function Pipeline() {
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
+    // Log completo do drag & drop para debug
+    console.log('🎯 Drag & Drop Debug:', {
+      destination: destination ? {
+        droppableId: destination.droppableId,
+        index: destination.index
+      } : null,
+      source: {
+        droppableId: source.droppableId,
+        index: source.index
+      },
+      draggableId,
+      leadId: draggableId
+    });
+
     if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
+      console.log('❌ Drag cancelled or same position');
       return;
     }
 
     const lead = leadsData?.leads.find(l => l.id === draggableId);
-    if (!lead) return;
+    if (!lead) {
+      console.log('❌ Lead not found:', draggableId);
+      return;
+    }
+
+    console.log('📋 Current lead state:', {
+      id: lead.id,
+      name: lead.name,
+      currentStatus: lead.status,
+      currentAttended: lead.attended,
+      targetColumn: destination.droppableId
+    });
+
+    // Encontrar a configuração da coluna de destino
+    const targetColumn = columnsConfig.find(col => col.id === destination.droppableId);
+    if (!targetColumn) {
+      console.log('❌ Target column config not found:', destination.droppableId);
+      return;
+    }
+
+    console.log('🎯 Target column config:', targetColumn);
 
     const updatePayload: UpdateLeadRequest = { 
-      id: draggableId, 
-      tenant_id: selectedTenantId 
+      id: draggableId
     };
 
-    let statusChanged = false;
-    let attendedChanged = false;
+    let hasChanges = false;
 
-    switch (destination.droppableId) {
-      case 'novo_lead':
-        if (lead.status !== 'novo_lead' || lead.attended) {
-          updatePayload.status = 'novo_lead';
-          updatePayload.attended = false;
-          statusChanged = true;
-          attendedChanged = lead.attended;
-        }
-        break;
-      case 'agendado':
-        if (lead.status !== 'agendado' || lead.attended) {
-          updatePayload.status = 'agendado';
-          updatePayload.attended = false;
-          statusChanged = true;
-          attendedChanged = lead.attended;
-        }
-        break;
-      case 'compareceu':
-        if (!lead.attended) {
-          updatePayload.attended = true;
-          // Keep the current status when marking as attended
-          attendedChanged = true;
-        }
-        break;
-      case 'em_espera':
-        if (lead.status !== 'em_espera') {
-          updatePayload.status = 'em_espera';
-          statusChanged = true;
-        }
-        break;
+    // Determinar mudanças baseadas na configuração da coluna
+    if (targetColumn.status !== null && lead.status !== targetColumn.status) {
+      updatePayload.status = targetColumn.status;
+      hasChanges = true;
+      console.log('📝 Status change:', lead.status, '->', targetColumn.status);
     }
+
+    if (lead.attended !== targetColumn.attended) {
+      updatePayload.attended = targetColumn.attended;
+      hasChanges = true;
+      console.log('✅ Attended change:', lead.attended, '->', targetColumn.attended);
+    }
+
+    console.log('📤 Update payload:', updatePayload, 'hasChanges:', hasChanges);
     
     // Only update if there are actual changes
-    if (statusChanged || attendedChanged) {
+    if (hasChanges) {
       updateLeadMutation.mutate(updatePayload);
+    } else {
+      console.log('ℹ️ No changes needed for this move');
     }
   };
 
@@ -198,18 +237,36 @@ export default function Pipeline() {
 
   const getLeadsForColumn = (columnId: string): Lead[] => {
     if (!filteredLeads) return [];
+    
+    const column = columnsConfig.find(col => col.id === columnId);
+    if (!column) return [];
+
+    console.log(`🔍 Filtering leads for column ${columnId}:`, {
+      columnConfig: column,
+      totalLeads: filteredLeads.length
+    });
+
+    let filteredForColumn: Lead[] = [];
+
     switch (columnId) {
       case 'novo_lead':
-        return filteredLeads.filter(l => l.status === 'novo_lead' && !l.attended);
+        filteredForColumn = filteredLeads.filter(l => l.status === 'novo_lead' && !l.attended);
+        break;
       case 'agendado':
-        return filteredLeads.filter(l => l.status === 'agendado' && !l.attended);
+        filteredForColumn = filteredLeads.filter(l => l.status === 'agendado' && !l.attended);
+        break;
       case 'compareceu':
-        return filteredLeads.filter(l => l.attended === true);
+        filteredForColumn = filteredLeads.filter(l => l.attended === true);
+        break;
       case 'em_espera':
-        return filteredLeads.filter(l => l.status === 'em_espera');
+        filteredForColumn = filteredLeads.filter(l => l.status === 'em_espera');
+        break;
       default:
-        return [];
+        filteredForColumn = [];
     }
+
+    console.log(`📊 Column ${columnId} has ${filteredForColumn.length} leads`);
+    return filteredForColumn;
   };
 
   const pipelineMetrics = useMemo(() => {
@@ -247,6 +304,22 @@ export default function Pipeline() {
     refetch();
     queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
   };
+
+  // Debug: Log das colunas e leads ao carregar
+  React.useEffect(() => {
+    if (leadsData?.leads) {
+      console.log('🔄 Pipeline data loaded:', {
+        totalLeads: leadsData.leads.length,
+        columnsConfig,
+        leadsByStatus: {
+          novo_lead: leadsData.leads.filter(l => l.status === 'novo_lead').length,
+          agendado: leadsData.leads.filter(l => l.status === 'agendado').length,
+          attended: leadsData.leads.filter(l => l.attended === true).length,
+          em_espera: leadsData.leads.filter(l => l.status === 'em_espera').length,
+        }
+      });
+    }
+  }, [leadsData]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 lg:p-6 flex flex-col">

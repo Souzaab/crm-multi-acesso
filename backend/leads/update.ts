@@ -43,7 +43,15 @@ export const update = api<UpdateLeadRequest, Lead>(
   { expose: true, method: "PUT", path: "/leads/:id", auth: true },
   async (req) => {
     try {
-      log.info("Updating lead", { req });
+      log.info("Updating lead", { 
+        leadId: req.id,
+        updates: {
+          status: req.status,
+          attended: req.attended,
+          converted: req.converted,
+          name: req.name ? req.name.substring(0, 20) + '...' : undefined
+        }
+      });
 
       // Require authentication
       requireAuth();
@@ -58,8 +66,16 @@ export const update = api<UpdateLeadRequest, Lead>(
       `;
 
       if (!existingLead) {
+        log.warn("Lead not found for update", { leadId: req.id });
         throw APIError.notFound("Lead not found");
       }
+
+      log.info("Existing lead state", {
+        leadId: req.id,
+        currentStatus: existingLead.status,
+        currentAttended: existingLead.attended,
+        currentConverted: existingLead.converted
+      });
 
       // Check tenant access
       checkTenantAccess(existingLead.tenant_id);
@@ -82,7 +98,7 @@ export const update = api<UpdateLeadRequest, Lead>(
         values.push(req.discipline);
       }
       if (req.age !== undefined) {
-        updates.push(`age = $${paramCount++}`);
+        updates.push(`age_group = $${paramCount++}`);
         values.push(req.age);
       }
       if (req.who_searched !== undefined) {
@@ -100,17 +116,32 @@ export const update = api<UpdateLeadRequest, Lead>(
       if (req.status !== undefined) {
         updates.push(`status = $${paramCount++}`);
         values.push(req.status);
+        log.info("Status update", { 
+          leadId: req.id,
+          oldStatus: existingLead.status,
+          newStatus: req.status 
+        });
       }
       if (req.attended !== undefined) {
         updates.push(`attended = $${paramCount++}`);
         values.push(req.attended);
+        log.info("Attended update", { 
+          leadId: req.id,
+          oldAttended: existingLead.attended,
+          newAttended: req.attended 
+        });
       }
       if (req.converted !== undefined) {
         updates.push(`converted = $${paramCount++}`);
         values.push(req.converted);
+        log.info("Converted update", { 
+          leadId: req.id,
+          oldConverted: existingLead.converted,
+          newConverted: req.converted 
+        });
       }
       if (req.notes !== undefined) {
-        updates.push(`notes = $${paramCount++}`);
+        updates.push(`observations = $${paramCount++}`);
         values.push(req.notes);
       }
       if (req.unit_id !== undefined) {
@@ -119,6 +150,7 @@ export const update = api<UpdateLeadRequest, Lead>(
       }
 
       if (updates.length === 0) {
+        log.info("No updates needed", { leadId: req.id });
         return existingLead;
       }
 
@@ -129,23 +161,47 @@ export const update = api<UpdateLeadRequest, Lead>(
       // Add WHERE clause
       values.push(req.id);
 
-      await leadsDB.rawExec(
-        `UPDATE leads SET ${updates.join(', ')} WHERE id = $${paramCount}`,
-        ...values
-      );
+      const updateQuery = `UPDATE leads SET ${updates.join(', ')} WHERE id = $${paramCount}`;
+      
+      log.info("Executing update query", {
+        leadId: req.id,
+        query: updateQuery,
+        valuesCount: values.length,
+        updatesCount: updates.length
+      });
 
+      await leadsDB.rawExec(updateQuery, ...values);
+
+      // Fetch the updated lead
       const updatedLead = await leadsDB.queryRow<Lead>`
-        SELECT * FROM leads WHERE id = ${req.id}
+        SELECT 
+          id, name, whatsapp_number, discipline, age_group as age, 
+          who_searched, origin_channel, interest_level, status, 
+          tenant_id, unit_id, created_at, updated_at, attended, 
+          converted, observations as notes
+        FROM leads 
+        WHERE id = ${req.id}
       `;
 
       if (!updatedLead) {
+        log.error("Failed to retrieve updated lead", { leadId: req.id });
         throw APIError.internal("Failed to retrieve updated lead");
       }
 
-      log.info("Lead updated successfully", { leadId: req.id });
+      log.info("Lead updated successfully", { 
+        leadId: req.id,
+        finalStatus: updatedLead.status,
+        finalAttended: updatedLead.attended,
+        finalConverted: updatedLead.converted
+      });
+
       return updatedLead;
     } catch (error) {
-      log.error("Error updating lead", { error: (error as Error).message });
+      log.error("Error updating lead", { 
+        leadId: req.id,
+        error: (error as Error).message,
+        stack: (error as Error).stack
+      });
       
       if (error instanceof APIError) {
         throw error;
