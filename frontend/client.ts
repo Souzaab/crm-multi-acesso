@@ -528,6 +528,7 @@ export namespace units {
 import { create as api_users_create_create } from "~backend/users/create";
 import { list as api_users_list_list } from "~backend/users/list";
 import { login as api_users_login_login } from "~backend/users/login";
+import { register as api_users_register_register } from "~backend/users/register";
 
 export namespace users {
 
@@ -539,6 +540,7 @@ export namespace users {
             this.create = this.create.bind(this)
             this.list = this.list.bind(this)
             this.login = this.login.bind(this)
+            this.register = this.register.bind(this)
         }
 
         /**
@@ -571,6 +573,15 @@ export namespace users {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/users/login`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_login_login>
+        }
+
+        /**
+         * Creates a new user account with a new unit (tenant).
+         */
+        public async register(params: RequestType<typeof api_users_register_register>): Promise<ResponseType<typeof api_users_register_register>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/users/register`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_register_register>
         }
     }
 }
