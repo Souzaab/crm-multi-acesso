@@ -21,17 +21,17 @@ export const login = api<LoginRequest, LoginResponse>(
     const user = await usersDB.queryRow`
       SELECT id, tenant_id, password_hash, is_master, is_admin 
       FROM users 
-      WHERE email = ${req.email}
+      WHERE email = ${req.email.trim().toLowerCase()}
     `;
 
     if (!user) {
-      throw APIError.unauthenticated("invalid email or password");
+      throw APIError.unauthenticated("Email ou senha inválidos");
     }
 
     // In a real app, use bcrypt.compare(req.password, user.password_hash)
     const isPasswordValid = user.password_hash === req.password_hash;
     if (!isPasswordValid) {
-      throw APIError.unauthenticated("invalid email or password");
+      throw APIError.unauthenticated("Email ou senha inválidos");
     }
 
     const secretKey = new TextEncoder().encode(jwtSecret());

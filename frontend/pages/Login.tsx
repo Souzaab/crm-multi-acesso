@@ -12,8 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Login() {
-  const { register: registerForm, handleSubmit: handleLoginSubmit } = useForm();
-  const { register: registerRegForm, handleSubmit: handleRegisterSubmit } = useForm();
+  const { register: registerForm, handleSubmit: handleLoginSubmit, reset: resetLoginForm } = useForm();
+  const { register: registerRegForm, handleSubmit: handleRegisterSubmit, reset: resetRegisterForm } = useForm();
   const { login } = useAuth();
   const backend = useBackend();
   const navigate = useNavigate();
@@ -34,6 +34,7 @@ export default function Login() {
       });
     },
     onError: (error: any) => {
+      console.error('Login error:', error);
       toast({
         title: 'Erro de Login',
         description: error.message || 'Email ou senha inválidos.',
@@ -53,6 +54,7 @@ export default function Login() {
       });
     },
     onError: (error: any) => {
+      console.error('Registration error:', error);
       toast({
         title: 'Erro no Cadastro',
         description: error.message || 'Erro ao criar conta.',
@@ -69,6 +71,15 @@ export default function Login() {
   };
 
   const onRegisterSubmit = (data: any) => {
+    if (data.password !== data.confirmPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não coincidem.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     registerMutation.mutate({
       name: data.name,
       email: data.email,
@@ -130,7 +141,7 @@ export default function Login() {
             <TabsContent value="register" className="space-y-4 mt-6">
               <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reg-name">Nome Completo</Label>
+                  <Label htmlFor="reg-name">Nome Completo *</Label>
                   <Input 
                     id="reg-name" 
                     type="text" 
@@ -140,7 +151,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email</Label>
+                  <Label htmlFor="reg-email">Email *</Label>
                   <Input 
                     id="reg-email" 
                     type="email" 
@@ -150,7 +161,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-password">Senha</Label>
+                  <Label htmlFor="reg-password">Senha *</Label>
                   <Input 
                     id="reg-password" 
                     type="password" 
@@ -158,6 +169,17 @@ export default function Login() {
                     required 
                     minLength={6}
                     {...registerRegForm('password')} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar Senha *</Label>
+                  <Input 
+                    id="confirm-password" 
+                    type="password" 
+                    placeholder="Digite a senha novamente"
+                    required 
+                    minLength={6}
+                    {...registerRegForm('confirmPassword')} 
                   />
                 </div>
                 <div className="space-y-2">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Download, BarChart2, Users, Clock, Award } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';

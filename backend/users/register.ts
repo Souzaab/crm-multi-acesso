@@ -44,7 +44,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
 
     // Check if user already exists
     const existingUser = await usersDB.queryRow`
-      SELECT id FROM users WHERE email = ${req.email.trim()}
+      SELECT id FROM users WHERE email = ${req.email.trim().toLowerCase()}
     `;
     
     if (existingUser) {
@@ -53,20 +53,17 @@ export const register = api<RegisterRequest, RegisterResponse>(
 
     // Create unit (tenant) first
     const unitName = req.unit_name?.trim() || `${req.name.trim()} - Unidade`;
+    const unitId = crypto.randomUUID();
+    
     const unit = await usersDB.queryRow<{id: string}>`
-      INSERT INTO units (name, tenant_id) 
-      VALUES (${unitName}, gen_random_uuid())
+      INSERT INTO units (id, name, tenant_id) 
+      VALUES (${unitId}, ${unitName}, ${unitId})
       RETURNING id
     `;
     
     if (!unit) {
       throw APIError.internal("Falha ao criar unidade");
     }
-
-    // Update unit to reference itself as tenant
-    await usersDB.exec`
-      UPDATE units SET tenant_id = id WHERE id = ${unit.id}
-    `;
 
     // Create user
     const passwordHash = `hash_${req.password}`; // In real app, use bcrypt
@@ -84,7 +81,7 @@ export const register = api<RegisterRequest, RegisterResponse>(
         is_master, is_admin, updated_at
       )
       VALUES (
-        ${req.name.trim()}, ${req.email.trim()}, ${passwordHash}, 'admin', 
+        ${req.name.trim()}, ${req.email.trim().toLowerCase()}, ${passwordHash}, 'admin', 
         ${unit.id}, ${unit.id}, true, true, NOW()
       )
       RETURNING id, name, email, role, tenant_id, is_master, is_admin
