@@ -12,8 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Login() {
-  const { register: registerForm, handleSubmit: handleLoginSubmit, reset: resetLoginForm } = useForm();
-  const { register: registerRegForm, handleSubmit: handleRegisterSubmit, reset: resetRegisterForm } = useForm();
+  const { register: registerForm, handleSubmit: handleLoginSubmit } = useForm();
+  const { register: registerRegForm, handleSubmit: handleRegisterSubmit } = useForm();
   const { login } = useAuth();
   const backend = useBackend();
   const navigate = useNavigate();
@@ -107,7 +107,7 @@ export default function Login() {
             <TabsContent value="login" className="space-y-4 mt-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
                 <p className="font-medium text-blue-900 mb-2">Dados para teste:</p>
-                <p className="text-blue-800">Email: <span className="font-mono">admin@academia.com</span></p>
+                <p className="text-blue-800">Email: <span className="font-mono">admin@escola.com</span></p>
                 <p className="text-blue-800">Senha: <span className="font-mono">123456</span></p>
               </div>
               
@@ -183,11 +183,11 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="unit-name">Nome da Academia (opcional)</Label>
+                  <Label htmlFor="unit-name">Nome da Escola (opcional)</Label>
                   <Input 
                     id="unit-name" 
                     type="text" 
-                    placeholder="Ex: Academia Fitness Center" 
+                    placeholder="Ex: Escola Aprender Mais" 
                     {...registerRegForm('unit_name')} 
                   />
                 </div>

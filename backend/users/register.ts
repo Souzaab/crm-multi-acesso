@@ -51,19 +51,19 @@ export const register = api<RegisterRequest, RegisterResponse>(
       throw APIError.alreadyExists("Já existe um usuário com este email");
     }
 
-    // Create unit (tenant) first
-    const unitName = req.unit_name?.trim() || `${req.name.trim()} - Unidade`;
+    // Step 1: Create the unit (tenant) without the self-referencing tenant_id
+    const unitName = req.unit_name?.trim() || `${req.name.trim()} - Escola`;
     const unitId = crypto.randomUUID();
     
-    const unit = await usersDB.queryRow<{id: string}>`
-      INSERT INTO units (id, name, tenant_id) 
-      VALUES (${unitId}, ${unitName}, ${unitId})
-      RETURNING id
+    await usersDB.exec`
+      INSERT INTO units (id, name) 
+      VALUES (${unitId}, ${unitName})
     `;
-    
-    if (!unit) {
-      throw APIError.internal("Falha ao criar unidade");
-    }
+
+    // Step 2: Update the unit to set its tenant_id to its own id
+    await usersDB.exec`
+      UPDATE units SET tenant_id = ${unitId} WHERE id = ${unitId}
+    `;
 
     // Create user
     const passwordHash = `hash_${req.password}`; // In real app, use bcrypt
@@ -82,13 +82,14 @@ export const register = api<RegisterRequest, RegisterResponse>(
       )
       VALUES (
         ${req.name.trim()}, ${req.email.trim().toLowerCase()}, ${passwordHash}, 'admin', 
-        ${unit.id}, ${unit.id}, true, true, NOW()
+        ${unitId}, ${unitId}, true, true, NOW()
       )
       RETURNING id, name, email, role, tenant_id, is_master, is_admin
     `;
     
     if (!user) {
-      throw APIError.internal("Falha ao criar usuário");
+      // In a real app, this would be part of a transaction that gets rolled back.
+      throw APIError.internal("Falha ao criar usuário após criar a unidade.");
     }
 
     // Generate JWT token
