@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import backend from '~backend/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw, Calendar, Filter } from 'lucide-react';
@@ -11,12 +10,12 @@ import PipelineChart from '../components/dashboard/PipelineChart';
 import DisciplineChart from '../components/dashboard/DisciplineChart';
 import RecentLeads from '../components/dashboard/RecentLeads';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
+import { useBackend } from '../hooks/useBackend';
+import { useTenant } from '../App';
 
-interface DashboardProps {
-  selectedTenantId: string;
-}
-
-export default function Dashboard({ selectedTenantId }: DashboardProps) {
+export default function Dashboard() {
+  const backend = useBackend();
+  const { selectedTenantId } = useTenant();
   const [isCreateLeadOpen, setIsCreateLeadOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('current_month');
 

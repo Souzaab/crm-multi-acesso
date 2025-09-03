@@ -21,6 +21,7 @@ export default function Users() {
   const { data: unitsData } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
+    enabled: !!selectedTenantId,
   });
 
   return (

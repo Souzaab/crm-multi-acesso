@@ -47,6 +47,7 @@ export default function Reports() {
   const { data: unitsData } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
+    enabled: !!selectedTenantId,
   });
 
   const handleExport = () => {

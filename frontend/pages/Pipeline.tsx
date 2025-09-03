@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import backend from '~backend/client';
 import type { Lead } from '~backend/leads/create';
 import { useToast } from '@/components/ui/use-toast';
 import PipelineColumn from '../components/pipeline/PipelineColumn';
 import LeadDetailsModal from '../components/pipeline/LeadDetailsModal';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-
-interface PipelineProps {
-  selectedTenantId: string;
-}
+import { useBackend } from '../hooks/useBackend';
+import { useTenant } from '../App';
 
 const statusColumns = [
   { id: 'novo_lead', title: 'Novos Leads', color: 'bg-blue-50 border-blue-200' },
@@ -19,9 +16,11 @@ const statusColumns = [
   { id: 'em_espera', title: 'Em Espera', color: 'bg-gray-100 border-gray-200' },
 ];
 
-export default function Pipeline({ selectedTenantId }: PipelineProps) {
+export default function Pipeline() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const backend = useBackend();
+  const { selectedTenantId } = useTenant();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const { data: leadsData, isLoading } = useQuery({

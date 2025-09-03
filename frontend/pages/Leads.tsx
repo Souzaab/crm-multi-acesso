@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import backend from '~backend/client';
 import { Button } from '@/components/ui/button';
 import { Plus, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,10 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import LeadsTable, { SortState } from '../components/leads/LeadsTable';
 import LeadFilters, { LeadFiltersState } from '../components/leads/LeadFilters';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
-
-interface LeadsProps {
-  selectedTenantId: string;
-}
+import { useBackend } from '../hooks/useBackend';
+import { useTenant } from '../App';
 
 const initialFilters: LeadFiltersState = {
   search: '',
@@ -21,7 +18,9 @@ const initialFilters: LeadFiltersState = {
   dateRange: undefined,
 };
 
-export default function Leads({ selectedTenantId }: LeadsProps) {
+export default function Leads() {
+  const backend = useBackend();
+  const { selectedTenantId } = useTenant();
   const [filters, setFilters] = useState<LeadFiltersState>(initialFilters);
   const [sort, setSort] = useState<SortState>({ sortBy: 'created_at', sortOrder: 'desc' });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -46,6 +45,7 @@ export default function Leads({ selectedTenantId }: LeadsProps) {
   const { data: unitsData } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
+    enabled: !!selectedTenantId,
   });
 
   const handleSortChange = (column: SortState['sortBy']) => {

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import backend from '~backend/client';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,12 +7,10 @@ import UnitsTable from '../components/units/UnitsTable';
 import CreateUnitDialog from '../components/units/CreateUnitDialog';
 import EditUnitDialog from '../components/units/EditUnitDialog';
 import type { Unit } from '~backend/units/create';
+import { useBackend } from '../hooks/useBackend';
 
-interface UnitsProps {
-  selectedTenantId: string;
-}
-
-export default function Units({ selectedTenantId }: UnitsProps) {
+export default function Units() {
+  const backend = useBackend();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const { toast } = useToast();

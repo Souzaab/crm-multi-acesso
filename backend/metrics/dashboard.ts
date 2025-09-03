@@ -55,11 +55,16 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
     const startDate = req.start_date || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const endDate = req.end_date || new Date().toISOString();
     
-    let whereClause = `WHERE tenant_id = '${req.tenant_id}' AND created_at >= '${startDate}' AND created_at <= '${endDate}'`;
+    const params: any[] = [req.tenant_id, startDate, endDate];
+    const whereClauses: string[] = ["tenant_id = $1", "created_at BETWEEN $2 AND $3"];
+    
     if (req.unit_id) {
-      whereClause += ` AND unit_id = '${req.unit_id}'`;
+      params.push(req.unit_id);
+      whereClauses.push(`unit_id = $${params.length}`);
     }
     
+    const whereClause = `WHERE ${whereClauses.join(" AND ")}`;
+
     // Basic counts
     const basicData = await metricsDB.rawQueryRow<{
       total: number, 
@@ -75,7 +80,8 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
         COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted,
         COUNT(CASE WHEN status = 'novo_lead' THEN 1 END) as new_leads
       FROM leads 
-      ${whereClause}`
+      ${whereClause}`,
+      ...params
     );
     
     const totalLeads = basicData?.total || 0;
@@ -90,6 +96,13 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
     const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0;
     
     // Monthly evolution
+    const monthlyEvolutionParams: any[] = [req.tenant_id];
+    let monthlyWhere = `WHERE tenant_id = $1`;
+    if (req.unit_id) {
+      monthlyEvolutionParams.push(req.unit_id);
+      monthlyWhere += ` AND unit_id = $2`;
+    }
+
     const monthlyEvolution: MonthlyEvolution[] = [];
     for await (const row of metricsDB.rawQuery<{month: string, total_leads: number, converted_leads: number}>(
       `SELECT 
@@ -97,12 +110,11 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
         COUNT(*) as total_leads,
         COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted_leads
       FROM leads 
-      WHERE tenant_id = $1 AND (unit_id = $2 OR $2 IS NULL)
+      ${monthlyWhere}
       GROUP BY DATE_TRUNC('month', created_at)
       ORDER BY month DESC
       LIMIT 12`,
-      req.tenant_id,
-      req.unit_id || null
+      ...monthlyEvolutionParams
     )) {
       monthlyEvolution.push(row);
     }
@@ -124,7 +136,8 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
           WHEN 'matriculado' THEN 6
           WHEN 'em_espera' THEN 7
           ELSE 8
-        END`
+        END`,
+      ...params
     )) {
       pipelineData.push(row);
     }
@@ -136,7 +149,8 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
       FROM leads 
       ${whereClause}
       GROUP BY discipline
-      ORDER BY count DESC`
+      ORDER BY count DESC`,
+      ...params
     )) {
       const percentage = totalLeads > 0 ? (row.count / totalLeads) * 100 : 0;
       disciplineData.push({
@@ -153,7 +167,8 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
       FROM leads 
       ${whereClause}
       ORDER BY created_at DESC
-      LIMIT 10`
+      LIMIT 10`,
+      ...params
     )) {
       recentLeads.push(row);
     }
