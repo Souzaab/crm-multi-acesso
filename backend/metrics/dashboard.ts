@@ -15,8 +15,11 @@ export interface DashboardMetrics {
   conversion_rate: number;
   total_leads: number;
   converted_leads: number;
+  new_leads: number;
+  scheduled_leads: number;
   monthly_evolution: MonthlyEvolution[];
   pipeline_data: PipelineData[];
+  discipline_data: DisciplineData[];
   recent_leads: RecentLead[];
 }
 
@@ -29,6 +32,12 @@ export interface MonthlyEvolution {
 export interface PipelineData {
   status: string;
   count: number;
+}
+
+export interface DisciplineData {
+  discipline: string;
+  count: number;
+  percentage: number;
 }
 
 export interface RecentLead {
@@ -51,38 +60,34 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
       whereClause += ` AND unit_id = '${req.unit_id}'`;
     }
     
-    // Scheduling rate
-    const schedulingData = await metricsDB.rawQueryRow<{total: number, scheduled: number}>(
+    // Basic counts
+    const basicData = await metricsDB.rawQueryRow<{
+      total: number, 
+      scheduled: number, 
+      attended: number, 
+      converted: number,
+      new_leads: number
+    }>(
       `SELECT 
         COUNT(*) as total,
-        COUNT(CASE WHEN status = 'agendado' THEN 1 END) as scheduled
-      FROM leads 
-      ${whereClause}`
-    );
-    
-    const schedulingRate = schedulingData?.total ? (schedulingData.scheduled / schedulingData.total) * 100 : 0;
-    
-    // Attendance rate
-    const attendanceData = await metricsDB.rawQueryRow<{scheduled: number, attended: number}>(
-      `SELECT 
         COUNT(CASE WHEN status = 'agendado' THEN 1 END) as scheduled,
-        COUNT(CASE WHEN attended = TRUE THEN 1 END) as attended
+        COUNT(CASE WHEN attended = TRUE THEN 1 END) as attended,
+        COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted,
+        COUNT(CASE WHEN status = 'novo_lead' THEN 1 END) as new_leads
       FROM leads 
       ${whereClause}`
     );
     
-    const attendanceRate = attendanceData?.scheduled ? (attendanceData.attended / attendanceData.scheduled) * 100 : 0;
+    const totalLeads = basicData?.total || 0;
+    const scheduledLeads = basicData?.scheduled || 0;
+    const attendedLeads = basicData?.attended || 0;
+    const convertedLeads = basicData?.converted || 0;
+    const newLeads = basicData?.new_leads || 0;
     
-    // Conversion rate
-    const conversionData = await metricsDB.rawQueryRow<{total: number, converted: number}>(
-      `SELECT 
-        COUNT(*) as total,
-        COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted
-      FROM leads 
-      ${whereClause}`
-    );
-    
-    const conversionRate = conversionData?.total ? (conversionData.converted / conversionData.total) * 100 : 0;
+    // Calculate rates
+    const schedulingRate = totalLeads > 0 ? (scheduledLeads / totalLeads) * 100 : 0;
+    const attendanceRate = scheduledLeads > 0 ? (attendedLeads / scheduledLeads) * 100 : 0;
+    const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0;
     
     // Monthly evolution
     const monthlyEvolution: MonthlyEvolution[] = [];
@@ -124,6 +129,23 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
       pipelineData.push(row);
     }
     
+    // Discipline data
+    const disciplineData: DisciplineData[] = [];
+    for await (const row of metricsDB.rawQuery<{discipline: string, count: number}>(
+      `SELECT discipline, COUNT(*) as count
+      FROM leads 
+      ${whereClause}
+      GROUP BY discipline
+      ORDER BY count DESC`
+    )) {
+      const percentage = totalLeads > 0 ? (row.count / totalLeads) * 100 : 0;
+      disciplineData.push({
+        discipline: row.discipline,
+        count: row.count,
+        percentage: Math.round(percentage * 10) / 10
+      });
+    }
+    
     // Recent leads
     const recentLeads: RecentLead[] = [];
     for await (const row of metricsDB.rawQuery<RecentLead>(
@@ -137,13 +159,16 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
     }
     
     return {
-      scheduling_rate: schedulingRate,
-      attendance_rate: attendanceRate,
-      conversion_rate: conversionRate,
-      total_leads: conversionData?.total || 0,
-      converted_leads: conversionData?.converted || 0,
+      scheduling_rate: Math.round(schedulingRate * 10) / 10,
+      attendance_rate: Math.round(attendanceRate * 10) / 10,
+      conversion_rate: Math.round(conversionRate * 10) / 10,
+      total_leads: totalLeads,
+      converted_leads: convertedLeads,
+      new_leads: newLeads,
+      scheduled_leads: scheduledLeads,
       monthly_evolution: monthlyEvolution,
       pipeline_data: pipelineData,
+      discipline_data: disciplineData,
       recent_leads: recentLeads
     };
   }
