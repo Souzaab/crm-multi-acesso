@@ -45,8 +45,8 @@ export default function Layout({ children }: LayoutProps) {
             className={cn(
               'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               isActive
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                ? 'bg-blue-900/50 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
             )}
           >
             <Icon className="h-5 w-5" />
@@ -61,16 +61,16 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-card border-r">
+        <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-background border-r border-gray-800">
           <div className="flex items-center flex-shrink-0 px-4">
-            <h1 className="text-xl font-bold text-foreground">CRM Multi-Acesso</h1>
+            <h1 className="text-xl font-bold text-white">CRM Multi-Acesso</h1>
           </div>
           <div className="mt-8 flex-grow flex flex-col">
             <nav className="flex-1 px-2 space-y-1">
               <NavigationItems />
             </nav>
             <div className="p-2">
-              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+              <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800/50" onClick={logout}>
                 <LogOut className="h-5 w-5 mr-3" />
                 Sair
               </Button>
@@ -87,15 +87,15 @@ export default function Layout({ children }: LayoutProps) {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64">
+          <SheetContent side="left" className="w-64 bg-background border-r border-gray-800">
             <div className="flex items-center mb-8">
-              <h1 className="text-xl font-bold text-foreground">CRM Multi-Acesso</h1>
+              <h1 className="text-xl font-bold text-white">CRM Multi-Acesso</h1>
             </div>
             <nav className="space-y-1">
               <NavigationItems />
             </nav>
             <div className="absolute bottom-4 left-2 right-2">
-              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+              <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800/50" onClick={logout}>
                 <LogOut className="h-5 w-5 mr-3" />
                 Sair
               </Button>
@@ -108,7 +108,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-col flex-1 overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+            <div className="max-w-full mx-auto px-4 sm:px-6 md:px-8">
               {children}
             </div>
           </div>

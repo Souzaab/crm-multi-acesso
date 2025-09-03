@@ -32,7 +32,7 @@ function MainApp() {
   const backend = useBackend();
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
 
-  const { data: unitsData } = useQuery({
+  const { data: unitsData, isLoading: isLoadingUnits } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
     enabled: !!user,
@@ -44,7 +44,7 @@ function MainApp() {
     }
   }, [user, selectedTenantId]);
 
-  if (!user || !unitsData?.units?.length || !selectedTenantId) {
+  if (!user || isLoadingUnits || !selectedTenantId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -60,7 +60,7 @@ function MainApp() {
       <Layout>
         <div className="mb-6">
           <TenantSelector
-            tenants={unitsData.units}
+            tenants={unitsData?.units || []}
             selectedTenantId={selectedTenantId}
             onTenantChange={setSelectedTenantId}
             isMaster={user.is_master}
@@ -106,6 +106,15 @@ function AppRouter() {
 }
 
 export default function App() {
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    document.documentElement.style.backgroundColor = '#020817'; // slate-950
+    return () => {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.style.backgroundColor = '';
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

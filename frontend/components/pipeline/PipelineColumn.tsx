@@ -8,7 +8,6 @@ interface PipelineColumnProps {
   column: {
     id: string;
     title: string;
-    color: string;
   };
   leads: Lead[];
   onCardClick: (lead: Lead) => void;
@@ -16,10 +15,10 @@ interface PipelineColumnProps {
 
 export default function PipelineColumn({ column, leads, onCardClick }: PipelineColumnProps) {
   return (
-    <div className={`min-w-80 w-80 flex-shrink-0 ${column.color} rounded-lg border`}>
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold text-sm text-gray-800">{column.title}</h3>
-        <Badge variant="secondary" className="bg-white text-gray-700">{leads.length}</Badge>
+    <div className="min-w-[320px] w-[320px] flex-shrink-0 bg-gray-900/50 rounded-xl flex flex-col">
+      <div className="p-4 bg-gradient-to-b from-blue-600/50 to-blue-800/50 rounded-t-xl flex justify-between items-center shadow-inner-top">
+        <h3 className="font-semibold text-white">{column.title}</h3>
+        <Badge variant="secondary" className="bg-black/20 text-white">{leads.length}</Badge>
       </div>
 
       <Droppable droppableId={column.id}>
@@ -27,8 +26,8 @@ export default function PipelineColumn({ column, leads, onCardClick }: PipelineC
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`p-2 space-y-2 min-h-40 transition-colors duration-200 ${
-              snapshot.isDraggingOver ? 'bg-muted/50' : ''
+            className={`p-2 space-y-2 min-h-[200px] transition-colors duration-200 flex-grow overflow-y-auto rounded-b-xl ${
+              snapshot.isDraggingOver ? 'bg-blue-900/20' : ''
             }`}
           >
             {leads.map((lead, index) => (

@@ -89,31 +89,31 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="flex items-center justify-center min-h-screen bg-background px-4">
+      <Card className="w-full max-w-md bg-card border-gray-800">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">CRM Multi-Acesso</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl text-white">CRM Multi-Acesso</CardTitle>
+          <CardDescription className="text-gray-400">
             Gerencie seus leads e conversões
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-900/50">
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="register">Cadastrar</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login" className="space-y-4 mt-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-                <p className="font-medium text-blue-900 mb-2">Dados para teste:</p>
-                <p className="text-blue-800">Email: <span className="font-mono">admin@escola.com</span></p>
-                <p className="text-blue-800">Senha: <span className="font-mono">123456</span></p>
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 text-sm">
+                <p className="font-medium text-blue-300 mb-2">Dados para teste:</p>
+                <p className="text-blue-300">Email: <span className="font-mono">admin@escola.com</span></p>
+                <p className="text-blue-300">Senha: <span className="font-mono">123456</span></p>
               </div>
               
               <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-400">Email</Label>
                   <Input 
                     id="email" 
                     type="email" 
@@ -123,7 +123,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password" className="text-gray-400">Senha</Label>
                   <Input 
                     id="password" 
                     type="password" 
@@ -132,7 +132,7 @@ export default function Login() {
                     {...registerForm('password')} 
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loginMutation.isPending}>
                   {loginMutation.isPending ? 'Entrando...' : 'Entrar'}
                 </Button>
               </form>
@@ -141,7 +141,7 @@ export default function Login() {
             <TabsContent value="register" className="space-y-4 mt-6">
               <form onSubmit={handleRegisterSubmit(onRegisterSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reg-name">Nome Completo *</Label>
+                  <Label htmlFor="reg-name" className="text-gray-400">Nome Completo *</Label>
                   <Input 
                     id="reg-name" 
                     type="text" 
@@ -151,7 +151,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email *</Label>
+                  <Label htmlFor="reg-email" className="text-gray-400">Email *</Label>
                   <Input 
                     id="reg-email" 
                     type="email" 
@@ -161,7 +161,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-password">Senha *</Label>
+                  <Label htmlFor="reg-password" className="text-gray-400">Senha *</Label>
                   <Input 
                     id="reg-password" 
                     type="password" 
@@ -172,7 +172,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Senha *</Label>
+                  <Label htmlFor="confirm-password" className="text-gray-400">Confirmar Senha *</Label>
                   <Input 
                     id="confirm-password" 
                     type="password" 
@@ -183,7 +183,7 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="unit-name">Nome da Escola (opcional)</Label>
+                  <Label htmlFor="unit-name" className="text-gray-400">Nome da Escola (opcional)</Label>
                   <Input 
                     id="unit-name" 
                     type="text" 
@@ -191,7 +191,7 @@ export default function Login() {
                     {...registerRegForm('unit_name')} 
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={registerMutation.isPending}>
                   {registerMutation.isPending ? 'Criando conta...' : 'Criar Conta'}
                 </Button>
               </form>
