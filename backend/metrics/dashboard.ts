@@ -1,9 +1,10 @@
-import { api } from "encore.dev/api";
+import { api, APIError } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { metricsDB } from "./db";
+import { getAuthData } from "~encore/auth";
 
 export interface GetDashboardRequest {
-  tenant_id: Query<string>;
+  tenant_id?: Query<string>; // For master users
   unit_id?: Query<string>;
   start_date?: Query<string>;
   end_date?: Query<string>;
@@ -50,12 +51,27 @@ export interface RecentLead {
 
 // Retrieves dashboard metrics and data for a tenant.
 export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
-  { expose: true, method: "GET", path: "/metrics/dashboard" },
+  { expose: true, auth: true, method: "GET", path: "/metrics/dashboard" },
   async (req) => {
+    const auth = getAuthData()!;
+    let tenantId = auth.tenant_id;
+
+    // Master user can specify a tenant_id, otherwise it's the user's own tenant.
+    if (auth.is_master && req.tenant_id) {
+      tenantId = req.tenant_id;
+    } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
+      // Non-master user trying to access other tenant's data
+      throw APIError.permissionDenied("You can only access your own tenant's data.");
+    }
+
+    if (!tenantId) {
+        throw APIError.invalidArgument("tenant_id is required.");
+    }
+
     const startDate = req.start_date || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
     const endDate = req.end_date || new Date().toISOString();
     
-    const params: any[] = [req.tenant_id, startDate, endDate];
+    const params: any[] = [tenantId, startDate, endDate];
     const whereClauses: string[] = ["tenant_id = $1", "created_at BETWEEN $2 AND $3"];
     
     if (req.unit_id) {
@@ -96,7 +112,7 @@ export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
     const conversionRate = totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0;
     
     // Monthly evolution
-    const monthlyEvolutionParams: any[] = [req.tenant_id];
+    const monthlyEvolutionParams: any[] = [tenantId];
     let monthlyWhere = `WHERE tenant_id = $1`;
     if (req.unit_id) {
       monthlyEvolutionParams.push(req.unit_id);
