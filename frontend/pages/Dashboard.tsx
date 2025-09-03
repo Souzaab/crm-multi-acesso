@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Calendar, Filter } from 'lucide-react';
+import { Plus, RefreshCw, Calendar, Filter, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import MetricsCards from '../components/dashboard/MetricsCards';
 import MonthlyChart from '../components/dashboard/MonthlyChart';
 import PipelineChart from '../components/dashboard/PipelineChart';
@@ -28,11 +29,20 @@ export default function Dashboard() {
     
     switch (period) {
       case 'current_month':
-        return { start_date: startOfMonth.toISOString(), end_date: now.toISOString() };
+        return { 
+          start_date: startOfMonth.toISOString().split('T')[0], 
+          end_date: now.toISOString().split('T')[0] 
+        };
       case 'last_month':
-        return { start_date: startOfLastMonth.toISOString(), end_date: endOfLastMonth.toISOString() };
+        return { 
+          start_date: startOfLastMonth.toISOString().split('T')[0], 
+          end_date: endOfLastMonth.toISOString().split('T')[0] 
+        };
       case 'current_year':
-        return { start_date: startOfYear.toISOString(), end_date: now.toISOString() };
+        return { 
+          start_date: startOfYear.toISOString().split('T')[0], 
+          end_date: now.toISOString().split('T')[0] 
+        };
       default:
         return {};
     }
@@ -40,12 +50,23 @@ export default function Dashboard() {
 
   const { data: dashboardData, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboard', selectedTenantId, selectedPeriod],
-    queryFn: () => backend.metrics.getDashboard({ 
-      tenant_id: selectedTenantId,
-      ...getPeriodDates(selectedPeriod)
-    }),
+    queryFn: async () => {
+      if (!selectedTenantId) {
+        throw new Error('Tenant ID is required');
+      }
+      
+      const params = {
+        tenant_id: selectedTenantId,
+        ...getPeriodDates(selectedPeriod)
+      };
+      
+      console.log('Dashboard query params:', params);
+      return backend.metrics.getDashboard(params);
+    },
     enabled: !!selectedTenantId,
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: unitsData } = useQuery({
@@ -63,7 +84,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Visão geral dos seus leads e métricas</p>
+            <p className="text-gray-600">Carregando dados...</p>
           </div>
         </div>
         
@@ -84,12 +105,29 @@ export default function Dashboard() {
   }
 
   if (error) {
+    console.error('Dashboard error:', error);
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Erro ao carregar dados do dashboard: {(error as Error).message}
+          </AlertDescription>
+        </Alert>
+        
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-6">
-            <p className="text-red-600">Erro ao carregar dados do dashboard. Tente novamente.</p>
+            <p className="text-red-600 mb-4">
+              Não foi possível carregar os dados do dashboard. 
+              Verifique sua conexão e tente novamente.
+            </p>
+            <div className="space-y-2 text-sm text-red-500">
+              <p><strong>Tenant ID:</strong> {selectedTenantId}</p>
+              <p><strong>Período:</strong> {selectedPeriod}</p>
+              <p><strong>Erro:</strong> {(error as Error).message}</p>
+            </div>
             <Button onClick={handleRefresh} variant="outline" className="mt-4">
               <RefreshCw className="h-4 w-4 mr-2" />
               Tentar Novamente
