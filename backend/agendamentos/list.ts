@@ -8,6 +8,8 @@ export interface ListAgendamentosRequest {
   lead_id?: Query<string>;
   user_id?: Query<string>;
   status?: Query<string>;
+  start_date?: Query<string>;
+  end_date?: Query<string>;
 }
 
 export interface ListAgendamentosResponse {
@@ -20,20 +22,36 @@ export const list = api<ListAgendamentosRequest, ListAgendamentosResponse>(
   async (req) => {
     let query = `SELECT * FROM agendamentos WHERE tenant_id = $1`;
     const params: any[] = [req.tenant_id];
-    
+    let paramIndex = 1;
+
     if (req.lead_id) {
+      paramIndex++;
       params.push(req.lead_id);
-      query += ` AND lead_id = $${params.length}`;
+      query += ` AND lead_id = $${paramIndex}`;
     }
     
     if (req.user_id) {
+      paramIndex++;
       params.push(req.user_id);
-      query += ` AND user_id = $${params.length}`;
+      query += ` AND user_id = $${paramIndex}`;
     }
     
     if (req.status) {
+      paramIndex++;
       params.push(req.status);
-      query += ` AND status = $${params.length}`;
+      query += ` AND status = $${paramIndex}`;
+    }
+
+    if (req.start_date) {
+      paramIndex++;
+      params.push(req.start_date);
+      query += ` AND data_agendamento >= $${paramIndex}`;
+    }
+
+    if (req.end_date) {
+      paramIndex++;
+      params.push(req.end_date);
+      query += ` AND data_agendamento <= $${paramIndex}`;
     }
     
     query += ` ORDER BY data_agendamento ASC`;

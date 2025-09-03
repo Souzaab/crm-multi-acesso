@@ -7,7 +7,8 @@ import {
   Users, 
   Building, 
   UserPlus,
-  Menu 
+  Menu,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: BarChart3 },
   { name: 'Pipeline', href: '/pipeline', icon: Kanban },
   { name: 'Leads', href: '/leads', icon: Users },
+  { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Unidades', href: '/units', icon: Building },
   { name: 'Usuários', href: '/users', icon: UserPlus },
 ];

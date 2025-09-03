@@ -10,6 +10,7 @@ import Pipeline from './pages/Pipeline';
 import Leads from './pages/Leads';
 import Units from './pages/Units';
 import Users from './pages/Users';
+import Reports from './pages/Reports';
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function AppInner() {
             <Route path="/leads" element={<Leads selectedTenantId={selectedTenantId} />} />
             <Route path="/units" element={<Units selectedTenantId={selectedTenantId} />} />
             <Route path="/users" element={<Users selectedTenantId={selectedTenantId} />} />
+            <Route path="/reports" element={<Reports selectedTenantId={selectedTenantId} />} />
           </Routes>
         </Layout>
         <Toaster />
