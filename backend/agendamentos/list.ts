@@ -2,14 +2,16 @@ import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { agendamentosDB } from "./db";
 import type { Agendamento } from "./create";
+import { getAuthData } from "~encore/auth";
+import { APIError } from "encore.dev/api";
 
 export interface ListAgendamentosRequest {
-  tenant_id: Query<string>;
   lead_id?: Query<string>;
   user_id?: Query<string>;
   status?: Query<string>;
   start_date?: Query<string>;
   end_date?: Query<string>;
+  tenant_id?: Query<string>; // For master users
 }
 
 export interface ListAgendamentosResponse {
@@ -18,10 +20,19 @@ export interface ListAgendamentosResponse {
 
 // Retrieves all agendamentos for a tenant with optional filters.
 export const list = api<ListAgendamentosRequest, ListAgendamentosResponse>(
-  { expose: true, method: "GET", path: "/agendamentos" },
+  { expose: true, auth: true, method: "GET", path: "/agendamentos" },
   async (req) => {
+    const auth = getAuthData()!;
+    let tenantId = auth.tenant_id;
+
+    if (auth.is_master && req.tenant_id) {
+      tenantId = req.tenant_id;
+    } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
+      throw APIError.permissionDenied("You can only access your own tenant's data.");
+    }
+
+    const params: any[] = [tenantId];
     let query = `SELECT * FROM agendamentos WHERE tenant_id = $1`;
-    const params: any[] = [req.tenant_id];
     let paramIndex = 1;
 
     if (req.lead_id) {

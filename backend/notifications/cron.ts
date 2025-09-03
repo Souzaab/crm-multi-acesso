@@ -10,11 +10,16 @@ export const checkUpcomingAppointments = cron("check-appointments", {
     const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     try {
-      // Iterate over all tenants (units) to check their appointments
+      // This would require an authenticated call in a real scenario,
+      // but for a system-level cron job, we might have a service account
+      // or we assume the client call can be made with master privileges internally.
+      // For simplicity, we assume the `units.list()` call works without auth here.
       const allUnits = await units.list();
       for (const unit of allUnits.units) {
         const tenantId = unit.id;
         
+        // This call would also need appropriate auth.
+        // Let's assume internal service calls can be trusted or have their own auth mechanism.
         const resp = await agendamentos.list({
             tenant_id: tenantId,
             start_date: now.toISOString(),

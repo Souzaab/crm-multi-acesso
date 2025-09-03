@@ -1,12 +1,14 @@
 import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { reportsDB } from "./db";
+import { getAuthData } from "~encore/auth";
+import { APIError } from "encore.dev/api";
 
 export interface GetReportsRequest {
-  tenant_id: Query<string>;
   unit_id?: Query<string>;
   start_date?: Query<string>;
   end_date?: Query<string>;
+  tenant_id?: Query<string>; // For master users
 }
 
 export interface ReportItem {
@@ -30,15 +32,24 @@ export interface GetReportsResponse {
 
 // Retrieves a collection of reports for the dashboard.
 export const getReports = api<GetReportsRequest, GetReportsResponse>(
-  { expose: true, method: "GET", path: "/reports" },
+  { expose: true, auth: true, method: "GET", path: "/reports" },
   async (req) => {
+    const auth = getAuthData()!;
+    let tenantId = auth.tenant_id;
+
+    if (auth.is_master && req.tenant_id) {
+      tenantId = req.tenant_id;
+    } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
+      throw APIError.permissionDenied("You can only access your own tenant's data.");
+    }
+
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
     const startDate = req.start_date || startOfMonth.toISOString();
     const endDate = req.end_date || now.toISOString();
     
-    const baseParams: any[] = [req.tenant_id, startDate, endDate];
+    const baseParams: any[] = [tenantId, startDate, endDate];
     let whereClause = `WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`;
     if (req.unit_id) {
       baseParams.push(req.unit_id);

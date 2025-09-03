@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import backend from '~backend/client';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 import UsersTable from '../components/users/UsersTable';
 import CreateUserDialog from '../components/users/CreateUserDialog';
+import { useBackend } from '../hooks/useBackend';
+import { useTenant } from '../App';
 
-interface UsersProps {
-  selectedTenantId: string;
-}
-
-export default function Users({ selectedTenantId }: UsersProps) {
+export default function Users() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const backend = useBackend();
+  const { selectedTenantId } = useTenant();
 
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['users', selectedTenantId],

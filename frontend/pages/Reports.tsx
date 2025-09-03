@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import backend from '~backend/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -8,11 +7,9 @@ import { Download, BarChart2, Users, Clock, Award } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { exportReportsToCSV } from '@/lib/export';
 import type { DateRange } from 'react-day-picker';
+import { useBackend } from '../hooks/useBackend';
+import { useTenant } from '../App';
 import type { Unit } from '~backend/units/create';
-
-interface ReportsProps {
-  selectedTenantId: string;
-}
 
 const ReportCard: React.FC<{ title: string; description: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, description, icon: Icon, children }) => (
   <Card>
@@ -31,8 +28,10 @@ const ReportCard: React.FC<{ title: string; description: string; icon: React.Ele
   </Card>
 );
 
-export default function Reports({ selectedTenantId }: ReportsProps) {
+export default function Reports() {
   const { toast } = useToast();
+  const backend = useBackend();
+  const { selectedTenantId } = useTenant();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const { data: reportsData, isLoading, error } = useQuery({

@@ -9,9 +9,11 @@ import {
   UserPlus,
   Menu,
   FileText,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '../hooks/useAuth';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -28,6 +30,7 @@ const navigation = [
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const NavigationItems = () => (
     <>
@@ -66,6 +69,12 @@ export default function Layout({ children }: LayoutProps) {
             <nav className="flex-1 px-2 space-y-1">
               <NavigationItems />
             </nav>
+            <div className="p-2">
+              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                <LogOut className="h-5 w-5 mr-3" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -85,6 +94,12 @@ export default function Layout({ children }: LayoutProps) {
             <nav className="space-y-1">
               <NavigationItems />
             </nav>
+            <div className="absolute bottom-4 left-2 right-2">
+              <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                <LogOut className="h-5 w-5 mr-3" />
+                Sair
+              </Button>
+            </div>
           </SheetContent>
         </Sheet>
       </div>
