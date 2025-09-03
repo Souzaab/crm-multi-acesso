@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import backend from '~backend/client';
 import type { Lead } from '~backend/leads/create';
 import { useToast } from '@/components/ui/use-toast';
 import PipelineColumn from '../components/pipeline/PipelineColumn';
+import LeadDetailsModal from '../components/pipeline/LeadDetailsModal';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 interface PipelineProps {
@@ -11,18 +12,17 @@ interface PipelineProps {
 }
 
 const statusColumns = [
-  { id: 'novo_lead', title: 'Novo Lead', color: 'bg-blue-100 border-blue-200' },
-  { id: 'agendado', title: 'Agendado', color: 'bg-yellow-100 border-yellow-200' },
-  { id: 'follow_up_1', title: 'Follow Up 1', color: 'bg-orange-100 border-orange-200' },
-  { id: 'follow_up_2', title: 'Follow Up 2', color: 'bg-red-100 border-red-200' },
-  { id: 'follow_up_3', title: 'Follow Up 3', color: 'bg-purple-100 border-purple-200' },
-  { id: 'matriculado', title: 'Matriculado', color: 'bg-green-100 border-green-200' },
+  { id: 'novo_lead', title: 'Novos Leads', color: 'bg-blue-50 border-blue-200' },
+  { id: 'agendado', title: 'Agendados', color: 'bg-yellow-50 border-yellow-200' },
+  { id: 'em_acompanhamento', title: 'Em Acompanhamento', color: 'bg-orange-50 border-orange-200', statuses: ['follow_up_1', 'follow_up_2', 'follow_up_3'] },
+  { id: 'matriculado', title: 'Matriculados', color: 'bg-green-50 border-green-200' },
   { id: 'em_espera', title: 'Em Espera', color: 'bg-gray-100 border-gray-200' },
 ];
 
 export default function Pipeline({ selectedTenantId }: PipelineProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const { data: leadsData, isLoading } = useQuery({
     queryKey: ['leads', selectedTenantId],
@@ -53,10 +53,13 @@ export default function Pipeline({ selectedTenantId }: PipelineProps) {
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId) return;
+    if (!destination || destination.droppableId === source.droppableId) return;
 
-    const newStatus = destination.droppableId;
+    let newStatus = destination.droppableId;
+    if (newStatus === 'em_acompanhamento') {
+      newStatus = 'follow_up_1'; // Default to first status in the group
+    }
+    
     updateLeadMutation.mutate({
       id: draggableId,
       status: newStatus,
@@ -64,8 +67,16 @@ export default function Pipeline({ selectedTenantId }: PipelineProps) {
     });
   };
 
-  const getLeadsByStatus = (status: string): Lead[] => {
-    return leadsData?.leads?.filter((lead) => lead.status === status) || [];
+  const getLeadsByStatus = (columnId: string): Lead[] => {
+    const column = statusColumns.find(c => c.id === columnId);
+    if (column?.statuses) {
+      return leadsData?.leads?.filter((lead) => column.statuses!.includes(lead.status)) || [];
+    }
+    return leadsData?.leads?.filter((lead) => lead.status === columnId) || [];
+  };
+
+  const handleCardClick = (lead: Lead) => {
+    setSelectedLead(lead);
   };
 
   if (isLoading) {
@@ -79,7 +90,7 @@ export default function Pipeline({ selectedTenantId }: PipelineProps) {
                 <div className="h-6 bg-muted-foreground/20 rounded w-3/4 mb-4"></div>
                 <div className="space-y-2">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-20 bg-muted-foreground/20 rounded"></div>
+                    <div key={i} className="h-24 bg-muted-foreground/20 rounded"></div>
                   ))}
                 </div>
               </div>
@@ -93,7 +104,8 @@ export default function Pipeline({ selectedTenantId }: PipelineProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Pipeline</h1>
+        <h1 className="text-3xl font-bold text-foreground">Pipeline de Vendas</h1>
+        <p className="text-muted-foreground">Arraste os cards para atualizar o status dos leads</p>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -103,10 +115,24 @@ export default function Pipeline({ selectedTenantId }: PipelineProps) {
               key={column.id}
               column={column}
               leads={getLeadsByStatus(column.id)}
+              onCardClick={handleCardClick}
             />
           ))}
         </div>
       </DragDropContext>
+
+      {selectedLead && (
+        <LeadDetailsModal
+          lead={selectedLead}
+          tenantId={selectedTenantId}
+          open={!!selectedLead}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setSelectedLead(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

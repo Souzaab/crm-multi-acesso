@@ -40,84 +40,58 @@ export const update = api<UpdateLeadRequest, Lead>(
 
     const updateFields: string[] = [];
     const params: any[] = [];
+    const changes: string[] = [];
     
-    if (req.name !== undefined) {
+    if (req.name !== undefined && req.name !== currentLead.name) {
       params.push(req.name);
       updateFields.push(`name = $${params.length}`);
+      changes.push(`nome para "${req.name}"`);
     }
     
-    if (req.whatsapp_number !== undefined) {
+    if (req.whatsapp_number !== undefined && req.whatsapp_number !== currentLead.whatsapp_number) {
       params.push(req.whatsapp_number);
       updateFields.push(`whatsapp_number = $${params.length}`);
+      changes.push(`WhatsApp para "${req.whatsapp_number}"`);
     }
     
-    if (req.discipline !== undefined) {
+    if (req.discipline !== undefined && req.discipline !== currentLead.discipline) {
       params.push(req.discipline);
       updateFields.push(`discipline = $${params.length}`);
+      changes.push(`disciplina para "${req.discipline}"`);
     }
     
-    if (req.age_group !== undefined) {
-      params.push(req.age_group);
-      updateFields.push(`age_group = $${params.length}`);
-    }
-    
-    if (req.who_searched !== undefined) {
-      params.push(req.who_searched);
-      updateFields.push(`who_searched = $${params.length}`);
-    }
-    
-    if (req.origin_channel !== undefined) {
-      params.push(req.origin_channel);
-      updateFields.push(`origin_channel = $${params.length}`);
-    }
-    
-    if (req.interest_level !== undefined) {
-      params.push(req.interest_level);
-      updateFields.push(`interest_level = $${params.length}`);
-    }
-    
-    if (req.observations !== undefined) {
-      params.push(req.observations);
-      updateFields.push(`observations = $${params.length}`);
-    }
-    
-    if (req.status !== undefined) {
+    if (req.status !== undefined && req.status !== currentLead.status) {
       params.push(req.status);
       updateFields.push(`status = $${params.length}`);
+      changes.push(`status de "${currentLead.status}" para "${req.status}"`);
     }
     
-    if (req.unit_id !== undefined) {
-      params.push(req.unit_id);
-      updateFields.push(`unit_id = $${params.length}`);
-    }
-    
-    if (req.user_id !== undefined) {
-      params.push(req.user_id);
-      updateFields.push(`user_id = $${params.length}`);
-    }
-    
-    if (req.scheduled_date !== undefined) {
-      params.push(req.scheduled_date);
-      updateFields.push(`scheduled_date = $${params.length}`);
-    }
-    
-    if (req.attended !== undefined) {
+    if (req.attended !== undefined && req.attended !== currentLead.attended) {
       params.push(req.attended);
       updateFields.push(`attended = $${params.length}`);
+      changes.push(`comparecimento para "${req.attended ? 'Sim' : 'Não'}"`);
     }
     
-    if (req.converted !== undefined) {
+    if (req.converted !== undefined && req.converted !== currentLead.converted) {
       params.push(req.converted);
       updateFields.push(`converted = $${params.length}`);
+      changes.push(`conversão para "${req.converted ? 'Sim' : 'Não'}"`);
     }
     
-    if (req.ai_interaction_log !== undefined) {
-      params.push(JSON.stringify(req.ai_interaction_log));
-      updateFields.push(`ai_interaction_log = $${params.length}`);
-    }
-    
+    // Add other fields to update without logging them as separate events
+    if (req.age_group !== undefined) { params.push(req.age_group); updateFields.push(`age_group = $${params.length}`); }
+    if (req.who_searched !== undefined) { params.push(req.who_searched); updateFields.push(`who_searched = $${params.length}`); }
+    if (req.origin_channel !== undefined) { params.push(req.origin_channel); updateFields.push(`origin_channel = $${params.length}`); }
+    if (req.interest_level !== undefined) { params.push(req.interest_level); updateFields.push(`interest_level = $${params.length}`); }
+    if (req.observations !== undefined) { params.push(req.observations); updateFields.push(`observations = $${params.length}`); }
+    if (req.unit_id !== undefined) { params.push(req.unit_id); updateFields.push(`unit_id = $${params.length}`); }
+    if (req.user_id !== undefined) { params.push(req.user_id); updateFields.push(`user_id = $${params.length}`); }
+    if (req.scheduled_date !== undefined) { params.push(req.scheduled_date); updateFields.push(`scheduled_date = $${params.length}`); }
+    if (req.ai_interaction_log !== undefined) { params.push(JSON.stringify(req.ai_interaction_log)); updateFields.push(`ai_interaction_log = $${params.length}`); }
+
     if (updateFields.length === 0) {
-      throw APIError.invalidArgument("no fields to update");
+      // If no fields are updated, just return the current lead data.
+      return currentLead;
     }
     
     params.push(new Date());
@@ -135,40 +109,23 @@ export const update = api<UpdateLeadRequest, Lead>(
     const row = await leadsDB.rawQueryRow<Lead>(query, ...params);
     
     if (!row) {
-      throw APIError.notFound("lead not found");
+      throw APIError.notFound("lead not found after update");
     }
     
-    // Create events for important status changes
-    try {
-      if (req.status && req.status !== currentLead.status) {
+    // Create a single event for all changes in this update
+    if (changes.length > 0) {
+      try {
         await eventos.create({
           tenant_id: req.tenant_id,
           lead_id: req.id,
-          user_id: req.user_id,
-          tipo_evento: 'status_alterado',
-          descricao: `Status do lead alterado de ${currentLead.status} para ${req.status}`,
-          dados_evento: {
-            status_anterior: currentLead.status,
-            status_novo: req.status
-          }
+          user_id: req.user_id, // Will be null if not provided
+          tipo_evento: 'lead_atualizado',
+          descricao: `Lead ${row.name} atualizado. Alterações: ${changes.join(', ')}.`,
+          dados_evento: { changes }
         });
+      } catch (error) {
+        console.error('Failed to create event for lead update:', error);
       }
-      
-      if (req.converted && !currentLead.converted) {
-        await eventos.create({
-          tenant_id: req.tenant_id,
-          lead_id: req.id,
-          user_id: req.user_id,
-          tipo_evento: 'lead_convertido',
-          descricao: `Lead ${row.name} foi convertido em matrícula`,
-          dados_evento: {
-            nome: row.name,
-            disciplina: row.discipline
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Failed to create event for lead update:', error);
     }
     
     return row;

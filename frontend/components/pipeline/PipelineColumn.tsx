@@ -1,8 +1,7 @@
 import React from 'react';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Droppable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Calendar, CheckCircle } from 'lucide-react';
+import PipelineCard from './PipelineCard';
 import type { Lead } from '~backend/leads/create';
 
 interface PipelineColumnProps {
@@ -12,14 +11,15 @@ interface PipelineColumnProps {
     color: string;
   };
   leads: Lead[];
+  onCardClick: (lead: Lead) => void;
 }
 
-export default function PipelineColumn({ column, leads }: PipelineColumnProps) {
+export default function PipelineColumn({ column, leads, onCardClick }: PipelineColumnProps) {
   return (
-    <div className={`min-w-80 ${column.color} rounded-lg p-4 border`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm">{column.title}</h3>
-        <Badge variant="secondary">{leads.length}</Badge>
+    <div className={`min-w-80 w-80 flex-shrink-0 ${column.color} rounded-lg border`}>
+      <div className="flex items-center justify-between p-4 border-b">
+        <h3 className="font-semibold text-sm text-gray-800">{column.title}</h3>
+        <Badge variant="secondary" className="bg-white text-gray-700">{leads.length}</Badge>
       </div>
 
       <Droppable droppableId={column.id}>
@@ -27,57 +27,17 @@ export default function PipelineColumn({ column, leads }: PipelineColumnProps) {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`space-y-2 min-h-20 ${
-              snapshot.isDraggingOver ? 'bg-muted/50 rounded-md' : ''
+            className={`p-2 space-y-2 min-h-40 transition-colors duration-200 ${
+              snapshot.isDraggingOver ? 'bg-muted/50' : ''
             }`}
           >
             {leads.map((lead, index) => (
-              <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                {(provided, snapshot) => (
-                  <Card
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className={`cursor-move transition-shadow ${
-                      snapshot.isDragging ? 'shadow-lg' : ''
-                    }`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">{lead.name}</h4>
-                        
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Phone className="h-3 w-3" />
-                          {lead.whatsapp_number}
-                        </div>
-
-                        {lead.scheduled_date && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(lead.scheduled_date).toLocaleDateString('pt-BR')}
-                          </div>
-                        )}
-
-                        {lead.attended && (
-                          <div className="flex items-center gap-1 text-xs text-green-600">
-                            <CheckCircle className="h-3 w-3" />
-                            Compareceu
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between">
-                          <Badge variant="outline" className="text-xs">
-                            {lead.interest_level}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(lead.created_at).toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </Draggable>
+              <PipelineCard 
+                key={lead.id} 
+                lead={lead} 
+                index={index} 
+                onCardClick={onCardClick} 
+              />
             ))}
             {provided.placeholder}
           </div>
