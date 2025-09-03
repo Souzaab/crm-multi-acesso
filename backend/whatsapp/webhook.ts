@@ -5,6 +5,7 @@ export interface WhatsAppWebhookRequest {
   from: string;
   message: string;
   timestamp: string;
+  tenant_id?: string;
 }
 
 export interface WhatsAppWebhookResponse {
@@ -18,6 +19,22 @@ export const webhook = api<WhatsAppWebhookRequest, WhatsAppWebhookResponse>(
   { expose: true, method: "POST", path: "/whatsapp/webhook" },
   async (req) => {
     try {
+      // Default to first tenant if not specified (for backward compatibility)
+      let tenantId = req.tenant_id;
+      if (!tenantId) {
+        const firstTenant = await whatsappDB.queryRow<{id: string}>`
+          SELECT id FROM units LIMIT 1
+        `;
+        tenantId = firstTenant?.id;
+      }
+      
+      if (!tenantId) {
+        return {
+          success: false,
+          message: "No tenant found"
+        };
+      }
+      
       // Simulate AI processing to extract lead information
       const extractedData = extractLeadDataFromMessage(req.message);
       
@@ -28,17 +45,21 @@ export const webhook = api<WhatsAppWebhookRequest, WhatsAppWebhookResponse>(
         };
       }
       
-      // Check if lead already exists
-      const existingLead = await whatsappDB.queryRow`
-        SELECT id FROM leads WHERE whatsapp_number = ${req.from}
-      `;
+      // Check if lead already exists for this tenant
+      const existingLead = await whatsappDB.rawQueryRow(
+        `SELECT id FROM leads WHERE whatsapp_number = $1 AND tenant_id = $2`,
+        req.from,
+        tenantId
+      );
       
       if (existingLead) {
         // Add interaction log
-        await whatsappDB.exec`
-          INSERT INTO lead_interactions (lead_id, interaction_type, content, ai_generated)
-          VALUES (${existingLead.id}, 'whatsapp_message', ${req.message}, TRUE)
-        `;
+        await whatsappDB.rawExec(
+          `INSERT INTO lead_interactions (lead_id, interaction_type, content, ai_generated)
+          VALUES ($1, 'whatsapp_message', $2, TRUE)`,
+          existingLead.id,
+          req.message
+        );
         
         return {
           success: true,
@@ -48,32 +69,41 @@ export const webhook = api<WhatsAppWebhookRequest, WhatsAppWebhookResponse>(
       }
       
       // Create new lead
-      const newLead = await whatsappDB.queryRow<{id: string}>`
-        INSERT INTO leads (
+      const newLead = await whatsappDB.rawQueryRow<{id: string}>(
+        `INSERT INTO leads (
           name, whatsapp_number, discipline, age_group, who_searched, 
-          origin_channel, interest_level, status, ai_interaction_log, updated_at
+          origin_channel, interest_level, status, ai_interaction_log, 
+          tenant_id, updated_at
         )
         VALUES (
-          ${extractedData.name}, ${req.from}, ${extractedData.discipline || 'Não especificado'}, 
-          ${extractedData.age_group || 'Não especificado'}, ${extractedData.who_searched || 'Própria pessoa'}, 
-          'WhatsApp', ${extractedData.interest_level || 'morno'}, 
-          ${extractedData.scheduled_date ? 'agendado' : 'novo_lead'}, 
-          ${JSON.stringify({
-            original_message: req.message,
-            extracted_data: extractedData,
-            confidence_score: extractedData.confidence_score,
-            timestamp: req.timestamp
-          })}, NOW()
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()
         )
-        RETURNING id
-      `;
+        RETURNING id`,
+        extractedData.name,
+        req.from,
+        extractedData.discipline || 'Não especificado',
+        extractedData.age_group || 'Não especificado',
+        extractedData.who_searched || 'Própria pessoa',
+        'WhatsApp',
+        extractedData.interest_level || 'morno',
+        extractedData.scheduled_date ? 'agendado' : 'novo_lead',
+        JSON.stringify({
+          original_message: req.message,
+          extracted_data: extractedData,
+          confidence_score: extractedData.confidence_score,
+          timestamp: req.timestamp
+        }),
+        tenantId
+      );
       
       if (newLead) {
         // Add initial interaction
-        await whatsappDB.exec`
-          INSERT INTO lead_interactions (lead_id, interaction_type, content, ai_generated)
-          VALUES (${newLead.id}, 'whatsapp_message', ${req.message}, TRUE)
-        `;
+        await whatsappDB.rawExec(
+          `INSERT INTO lead_interactions (lead_id, interaction_type, content, ai_generated)
+          VALUES ($1, 'whatsapp_message', $2, TRUE)`,
+          newLead.id,
+          req.message
+        );
         
         return {
           success: true,

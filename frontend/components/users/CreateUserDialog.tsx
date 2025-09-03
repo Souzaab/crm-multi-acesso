@@ -28,9 +28,10 @@ interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   units: Unit[];
+  selectedTenantId: string;
 }
 
-export default function CreateUserDialog({ open, onOpenChange, units }: CreateUserDialogProps) {
+export default function CreateUserDialog({ open, onOpenChange, units, selectedTenantId }: CreateUserDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -41,13 +42,16 @@ export default function CreateUserDialog({ open, onOpenChange, units }: CreateUs
       password_hash: '',
       role: 'user',
       unit_id: '',
+      tenant_id: selectedTenantId,
+      is_master: false,
+      is_admin: false,
     },
   });
 
   const createUserMutation = useMutation({
     mutationFn: (data: CreateUserRequest) => backend.users.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users', selectedTenantId] });
       toast({
         title: 'Sucesso',
         description: 'Usuário criado com sucesso',
@@ -70,6 +74,7 @@ export default function CreateUserDialog({ open, onOpenChange, units }: CreateUs
     createUserMutation.mutate({
       ...data,
       password_hash: `hash_${data.password_hash}`, // Temporary solution
+      tenant_id: selectedTenantId,
     });
   };
 

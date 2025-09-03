@@ -9,7 +9,11 @@ import CreateUnitDialog from '../components/units/CreateUnitDialog';
 import EditUnitDialog from '../components/units/EditUnitDialog';
 import type { Unit } from '~backend/units/create';
 
-export default function Units() {
+interface UnitsProps {
+  selectedTenantId: string;
+}
+
+export default function Units({ selectedTenantId }: UnitsProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const { toast } = useToast();

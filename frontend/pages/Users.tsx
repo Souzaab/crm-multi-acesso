@@ -7,14 +7,19 @@ import { useToast } from '@/components/ui/use-toast';
 import UsersTable from '../components/users/UsersTable';
 import CreateUserDialog from '../components/users/CreateUserDialog';
 
-export default function Users() {
+interface UsersProps {
+  selectedTenantId: string;
+}
+
+export default function Users({ selectedTenantId }: UsersProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => backend.users.list(),
+    queryKey: ['users', selectedTenantId],
+    queryFn: () => backend.users.list({ tenant_id: selectedTenantId }),
+    enabled: !!selectedTenantId,
   });
 
   const { data: unitsData } = useQuery({
@@ -42,6 +47,7 @@ export default function Users() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         units={unitsData?.units || []}
+        selectedTenantId={selectedTenantId}
       />
     </div>
   );

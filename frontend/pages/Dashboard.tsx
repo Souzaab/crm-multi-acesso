@@ -2,16 +2,20 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import backend from '~backend/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Calendar, Users, Target } from 'lucide-react';
 import MetricsCards from '../components/dashboard/MetricsCards';
 import MonthlyChart from '../components/dashboard/MonthlyChart';
 import PipelineChart from '../components/dashboard/PipelineChart';
 import RecentLeads from '../components/dashboard/RecentLeads';
 
-export default function Dashboard() {
+interface DashboardProps {
+  selectedTenantId: string;
+}
+
+export default function Dashboard({ selectedTenantId }: DashboardProps) {
   const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => backend.metrics.getDashboard(),
+    queryKey: ['dashboard', selectedTenantId],
+    queryFn: () => backend.metrics.getDashboard({ tenant_id: selectedTenantId }),
+    enabled: !!selectedTenantId,
   });
 
   if (isLoading) {

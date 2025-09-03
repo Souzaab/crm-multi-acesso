@@ -7,6 +7,9 @@ export interface CreateUserRequest {
   password_hash: string;
   role?: "admin" | "user";
   unit_id?: string;
+  tenant_id: string;
+  is_master?: boolean;
+  is_admin?: boolean;
 }
 
 export interface User {
@@ -15,6 +18,9 @@ export interface User {
   email: string;
   role: string;
   unit_id?: string;
+  tenant_id: string;
+  is_master: boolean;
+  is_admin: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -24,9 +30,16 @@ export const create = api<CreateUserRequest, User>(
   { expose: true, method: "POST", path: "/users" },
   async (req) => {
     const row = await usersDB.queryRow<User>`
-      INSERT INTO users (name, email, password_hash, role, unit_id, updated_at)
-      VALUES (${req.name}, ${req.email}, ${req.password_hash}, ${req.role || 'user'}, ${req.unit_id || null}, NOW())
-      RETURNING id, name, email, role, unit_id, created_at, updated_at
+      INSERT INTO users (
+        name, email, password_hash, role, unit_id, tenant_id, 
+        is_master, is_admin, updated_at
+      )
+      VALUES (
+        ${req.name}, ${req.email}, ${req.password_hash}, ${req.role || 'user'}, 
+        ${req.unit_id || null}, ${req.tenant_id}, ${req.is_master || false}, 
+        ${req.is_admin || false}, NOW()
+      )
+      RETURNING id, name, email, role, unit_id, tenant_id, is_master, is_admin, created_at, updated_at
     `;
     
     if (!row) {

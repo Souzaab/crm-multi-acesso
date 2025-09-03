@@ -6,6 +6,10 @@ import { useToast } from '@/components/ui/use-toast';
 import PipelineColumn from '../components/pipeline/PipelineColumn';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
+interface PipelineProps {
+  selectedTenantId: string;
+}
+
 const statusColumns = [
   { id: 'novo_lead', title: 'Novo Lead', color: 'bg-blue-100 border-blue-200' },
   { id: 'agendado', title: 'Agendado', color: 'bg-yellow-100 border-yellow-200' },
@@ -16,20 +20,21 @@ const statusColumns = [
   { id: 'em_espera', title: 'Em Espera', color: 'bg-gray-100 border-gray-200' },
 ];
 
-export default function Pipeline() {
+export default function Pipeline({ selectedTenantId }: PipelineProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: leadsData, isLoading } = useQuery({
-    queryKey: ['leads'],
-    queryFn: () => backend.leads.list(),
+    queryKey: ['leads', selectedTenantId],
+    queryFn: () => backend.leads.list({ tenant_id: selectedTenantId }),
+    enabled: !!selectedTenantId,
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: (params: { id: string; status: string }) =>
+    mutationFn: (params: { id: string; status: string; tenant_id: string }) =>
       backend.leads.update(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
       toast({
         title: 'Sucesso',
         description: 'Status do lead atualizado com sucesso',
@@ -52,7 +57,11 @@ export default function Pipeline() {
     if (destination.droppableId === source.droppableId) return;
 
     const newStatus = destination.droppableId;
-    updateLeadMutation.mutate({ id: draggableId, status: newStatus });
+    updateLeadMutation.mutate({
+      id: draggableId,
+      status: newStatus,
+      tenant_id: selectedTenantId,
+    });
   };
 
   const getLeadsByStatus = (status: string): Lead[] => {

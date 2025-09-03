@@ -1,9 +1,11 @@
 import { api, APIError } from "encore.dev/api";
 import { leadsDB } from "./db";
+import { eventos } from "~encore/clients";
 import type { Lead } from "./create";
 
 export interface UpdateLeadRequest {
   id: string;
+  tenant_id: string;
   name?: string;
   whatsapp_number?: string;
   discipline?: string;
@@ -25,6 +27,17 @@ export interface UpdateLeadRequest {
 export const update = api<UpdateLeadRequest, Lead>(
   { expose: true, method: "PUT", path: "/leads/:id" },
   async (req) => {
+    // Get current lead data
+    const currentLead = await leadsDB.rawQueryRow<Lead>(
+      `SELECT * FROM leads WHERE id = $1 AND tenant_id = $2`,
+      req.id,
+      req.tenant_id
+    );
+    
+    if (!currentLead) {
+      throw APIError.notFound("lead not found");
+    }
+
     const updateFields: string[] = [];
     const params: any[] = [];
     
@@ -107,14 +120,15 @@ export const update = api<UpdateLeadRequest, Lead>(
       throw APIError.invalidArgument("no fields to update");
     }
     
-    params.push(NOW());
+    params.push(new Date());
     updateFields.push(`updated_at = $${params.length}`);
     
     params.push(req.id);
+    params.push(req.tenant_id);
     const query = `
       UPDATE leads 
       SET ${updateFields.join(', ')}
-      WHERE id = $${params.length}
+      WHERE id = $${params.length - 1} AND tenant_id = $${params.length}
       RETURNING *
     `;
     
@@ -124,10 +138,39 @@ export const update = api<UpdateLeadRequest, Lead>(
       throw APIError.notFound("lead not found");
     }
     
+    // Create events for important status changes
+    try {
+      if (req.status && req.status !== currentLead.status) {
+        await eventos.create({
+          tenant_id: req.tenant_id,
+          lead_id: req.id,
+          user_id: req.user_id,
+          tipo_evento: 'status_alterado',
+          descricao: `Status do lead alterado de ${currentLead.status} para ${req.status}`,
+          dados_evento: {
+            status_anterior: currentLead.status,
+            status_novo: req.status
+          }
+        });
+      }
+      
+      if (req.converted && !currentLead.converted) {
+        await eventos.create({
+          tenant_id: req.tenant_id,
+          lead_id: req.id,
+          user_id: req.user_id,
+          tipo_evento: 'lead_convertido',
+          descricao: `Lead ${row.name} foi convertido em matrícula`,
+          dados_evento: {
+            nome: row.name,
+            disciplina: row.discipline
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create event for lead update:', error);
+    }
+    
     return row;
   }
 );
-
-function NOW() {
-  return new Date();
-}

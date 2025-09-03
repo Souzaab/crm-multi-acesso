@@ -9,7 +9,11 @@ import LeadsTable from '../components/leads/LeadsTable';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import LeadFilters from '../components/leads/LeadFilters';
 
-export default function Leads() {
+interface LeadsProps {
+  selectedTenantId: string;
+}
+
+export default function Leads({ selectedTenantId }: LeadsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -17,8 +21,12 @@ export default function Leads() {
   const queryClient = useQueryClient();
 
   const { data: leadsData, isLoading } = useQuery({
-    queryKey: ['leads', selectedStatus],
-    queryFn: () => backend.leads.list({ status: selectedStatus || undefined }),
+    queryKey: ['leads', selectedTenantId, selectedStatus],
+    queryFn: () => backend.leads.list({
+      tenant_id: selectedTenantId,
+      status: selectedStatus || undefined,
+    }),
+    enabled: !!selectedTenantId,
   });
 
   const { data: unitsData } = useQuery({
@@ -27,9 +35,12 @@ export default function Leads() {
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: (params: any) => backend.leads.update(params),
+    mutationFn: (params: any) => backend.leads.update({
+      ...params,
+      tenant_id: selectedTenantId,
+    }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
       toast({
         title: 'Sucesso',
         description: 'Lead atualizado com sucesso',
@@ -46,9 +57,12 @@ export default function Leads() {
   });
 
   const deleteLeadMutation = useMutation({
-    mutationFn: (id: string) => backend.leads.deleteLead({ id }),
+    mutationFn: (id: string) => backend.leads.deleteLead({
+      id,
+      tenant_id: selectedTenantId,
+    }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
       toast({
         title: 'Sucesso',
         description: 'Lead excluído com sucesso',
@@ -142,6 +156,7 @@ export default function Leads() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         units={unitsData?.units || []}
+        selectedTenantId={selectedTenantId}
       />
     </div>
   );

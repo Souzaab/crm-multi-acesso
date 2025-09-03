@@ -29,9 +29,10 @@ interface CreateLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   units: Unit[];
+  selectedTenantId: string;
 }
 
-export default function CreateLeadDialog({ open, onOpenChange, units }: CreateLeadDialogProps) {
+export default function CreateLeadDialog({ open, onOpenChange, units, selectedTenantId }: CreateLeadDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -46,6 +47,7 @@ export default function CreateLeadDialog({ open, onOpenChange, units }: CreateLe
       interest_level: 'morno',
       observations: '',
       status: 'novo_lead',
+      tenant_id: selectedTenantId,
     },
   });
 
@@ -71,7 +73,10 @@ export default function CreateLeadDialog({ open, onOpenChange, units }: CreateLe
   });
 
   const onSubmit = (data: CreateLeadRequest) => {
-    createLeadMutation.mutate(data);
+    createLeadMutation.mutate({
+      ...data,
+      tenant_id: selectedTenantId,
+    });
   };
 
   return (

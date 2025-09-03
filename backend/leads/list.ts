@@ -4,6 +4,7 @@ import { leadsDB } from "./db";
 import type { Lead } from "./create";
 
 export interface ListLeadsRequest {
+  tenant_id: Query<string>;
   status?: Query<string>;
   unit_id?: Query<string>;
   user_id?: Query<string>;
@@ -13,12 +14,12 @@ export interface ListLeadsResponse {
   leads: Lead[];
 }
 
-// Retrieves all leads with optional filters.
+// Retrieves all leads for a tenant with optional filters.
 export const list = api<ListLeadsRequest, ListLeadsResponse>(
   { expose: true, method: "GET", path: "/leads" },
   async (req) => {
-    let query = `SELECT * FROM leads WHERE 1=1`;
-    const params: any[] = [];
+    let query = `SELECT * FROM leads WHERE tenant_id = $1`;
+    const params: any[] = [req.tenant_id];
     
     if (req.status) {
       params.push(req.status);
