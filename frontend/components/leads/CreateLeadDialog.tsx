@@ -32,11 +32,23 @@ interface CreateLeadDialogProps {
   selectedTenantId: string;
 }
 
+interface FormData {
+  name: string;
+  whatsapp_number: string;
+  discipline: string;
+  age_group: string;
+  who_searched: string;
+  origin_channel: string;
+  interest_level: 'frio' | 'morno' | 'quente';
+  observations?: string;
+  unit_id?: string;
+}
+
 export default function CreateLeadDialog({ open, onOpenChange, units, selectedTenantId }: CreateLeadDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const form = useForm<CreateLeadRequest>({
+  const form = useForm<FormData>({
     defaultValues: {
       name: '',
       whatsapp_number: '',
@@ -46,8 +58,7 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
       origin_channel: '',
       interest_level: 'morno',
       observations: '',
-      status: 'novo_lead',
-      tenant_id: selectedTenantId,
+      unit_id: '',
     },
   });
 
@@ -55,6 +66,7 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
     mutationFn: (data: CreateLeadRequest) => backend.leads.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast({
         title: 'Sucesso',
         description: 'Lead criado com sucesso',
@@ -62,30 +74,32 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
       form.reset();
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating lead:', error);
+      const message = error?.message || 'Erro ao criar lead';
       toast({
         title: 'Erro',
-        description: 'Erro ao criar lead',
+        description: message,
         variant: 'destructive',
       });
     },
   });
 
-  const onSubmit = (data: CreateLeadRequest) => {
+  const onSubmit = (data: FormData) => {
     createLeadMutation.mutate({
       ...data,
       tenant_id: selectedTenantId,
+      status: 'novo_lead',
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Criar Novo Lead</DialogTitle>
           <DialogDescription>
-            Preencha as informações do novo lead.
+            Preencha as informações obrigatórias do novo lead.
           </DialogDescription>
         </DialogHeader>
         
@@ -94,11 +108,15 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="name"
+              rules={{ 
+                required: 'Nome é obrigatório',
+                minLength: { value: 2, message: 'Nome deve ter pelo menos 2 caracteres' }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>Nome *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do lead" {...field} />
+                    <Input placeholder="Nome completo do lead" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -108,11 +126,32 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="whatsapp_number"
+              rules={{ 
+                required: 'WhatsApp é obrigatório',
+                pattern: {
+                  value: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
+                  message: 'Formato: (11) 99999-9999'
+                }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>WhatsApp</FormLabel>
+                  <FormLabel>WhatsApp *</FormLabel>
                   <FormControl>
-                    <Input placeholder="(11) 99999-9999" {...field} />
+                    <Input 
+                      placeholder="(11) 99999-9999" 
+                      {...field}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length >= 11) {
+                          value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                        } else if (value.length >= 7) {
+                          value = value.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+                        } else if (value.length >= 3) {
+                          value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+                        }
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,12 +161,28 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="discipline"
+              rules={{ required: 'Disciplina é obrigatória' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Disciplina</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Natação, Musculação" {...field} />
-                  </FormControl>
+                  <FormLabel>Disciplina *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a disciplina" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Natação">Natação</SelectItem>
+                      <SelectItem value="Musculação">Musculação</SelectItem>
+                      <SelectItem value="Pilates">Pilates</SelectItem>
+                      <SelectItem value="Yoga">Yoga</SelectItem>
+                      <SelectItem value="CrossFit">CrossFit</SelectItem>
+                      <SelectItem value="Dança">Dança</SelectItem>
+                      <SelectItem value="Funcional">Funcional</SelectItem>
+                      <SelectItem value="Lutas">Lutas</SelectItem>
+                      <SelectItem value="Outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -136,9 +191,10 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="age_group"
+              rules={{ required: 'Faixa etária é obrigatória' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Faixa Etária</FormLabel>
+                  <FormLabel>Faixa Etária *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -146,10 +202,10 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="infantil">Infantil</SelectItem>
-                      <SelectItem value="adolescente">Adolescente</SelectItem>
-                      <SelectItem value="adulto">Adulto</SelectItem>
-                      <SelectItem value="idoso">Idoso</SelectItem>
+                      <SelectItem value="Infantil (0-12 anos)">Infantil (0-12 anos)</SelectItem>
+                      <SelectItem value="Adolescente (13-17 anos)">Adolescente (13-17 anos)</SelectItem>
+                      <SelectItem value="Adulto (18-59 anos)">Adulto (18-59 anos)</SelectItem>
+                      <SelectItem value="Idoso (60+ anos)">Idoso (60+ anos)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -160,12 +216,24 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="who_searched"
+              rules={{ required: 'Quem procurou é obrigatório' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quem Procurou</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Própria pessoa, Responsável" {...field} />
-                  </FormControl>
+                  <FormLabel>Quem Procurou *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Quem fez o contato" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Própria pessoa">Própria pessoa</SelectItem>
+                      <SelectItem value="Responsável">Responsável</SelectItem>
+                      <SelectItem value="Familiar">Familiar</SelectItem>
+                      <SelectItem value="Amigo">Amigo</SelectItem>
+                      <SelectItem value="Outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -174,13 +242,14 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="origin_channel"
+              rules={{ required: 'Canal de origem é obrigatório' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Canal de Origem</FormLabel>
+                  <FormLabel>Canal de Origem *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o canal" />
+                        <SelectValue placeholder="Como nos conheceu" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -188,7 +257,9 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                       <SelectItem value="Instagram">Instagram</SelectItem>
                       <SelectItem value="Facebook">Facebook</SelectItem>
                       <SelectItem value="Google">Google</SelectItem>
+                      <SelectItem value="Site">Site</SelectItem>
                       <SelectItem value="Indicação">Indicação</SelectItem>
+                      <SelectItem value="Passando na rua">Passando na rua</SelectItem>
                       <SelectItem value="Outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
@@ -206,13 +277,13 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o nível" />
+                        <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="frio">Frio</SelectItem>
-                      <SelectItem value="morno">Morno</SelectItem>
-                      <SelectItem value="quente">Quente</SelectItem>
+                      <SelectItem value="frio">🟦 Frio - Apenas pesquisando</SelectItem>
+                      <SelectItem value="morno">🟨 Morno - Interessado</SelectItem>
+                      <SelectItem value="quente">🟥 Quente - Muito interessado</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -230,7 +301,7 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a unidade" />
+                          <SelectValue placeholder="Selecione a unidade (opcional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -254,18 +325,23 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                 <FormItem>
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Observações adicionais..." {...field} />
+                    <Textarea 
+                      placeholder="Informações adicionais sobre o lead..."
+                      className="min-h-[80px]"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={createLeadMutation.isPending}
               >
                 Cancelar
               </Button>

@@ -1,4 +1,4 @@
-import { api } from "encore.dev/api";
+import { api, APIError } from "encore.dev/api";
 import { leadsDB } from "./db";
 import { eventos } from "~encore/clients";
 
@@ -45,6 +45,46 @@ export interface Lead {
 export const create = api<CreateLeadRequest, Lead>(
   { expose: true, method: "POST", path: "/leads" },
   async (req) => {
+    // Validate required fields
+    if (!req.name?.trim()) {
+      throw APIError.invalidArgument("Nome é obrigatório");
+    }
+    
+    if (!req.whatsapp_number?.trim()) {
+      throw APIError.invalidArgument("Número do WhatsApp é obrigatório");
+    }
+    
+    if (!req.discipline?.trim()) {
+      throw APIError.invalidArgument("Disciplina é obrigatória");
+    }
+    
+    if (!req.age_group?.trim()) {
+      throw APIError.invalidArgument("Faixa etária é obrigatória");
+    }
+    
+    if (!req.who_searched?.trim()) {
+      throw APIError.invalidArgument("Quem procurou é obrigatório");
+    }
+    
+    if (!req.origin_channel?.trim()) {
+      throw APIError.invalidArgument("Canal de origem é obrigatório");
+    }
+    
+    if (!req.tenant_id?.trim()) {
+      throw APIError.invalidArgument("Tenant ID é obrigatório");
+    }
+
+    // Check if lead with same whatsapp number already exists for this tenant
+    const existingLead = await leadsDB.rawQueryRow(
+      `SELECT id FROM leads WHERE whatsapp_number = $1 AND tenant_id = $2`,
+      req.whatsapp_number.trim(),
+      req.tenant_id
+    );
+    
+    if (existingLead) {
+      throw APIError.alreadyExists("Já existe um lead com este número de WhatsApp");
+    }
+
     const row = await leadsDB.queryRow<Lead>`
       INSERT INTO leads (
         name, whatsapp_number, discipline, age_group, who_searched, 
@@ -52,9 +92,9 @@ export const create = api<CreateLeadRequest, Lead>(
         user_id, scheduled_date, ai_interaction_log, tenant_id, updated_at
       )
       VALUES (
-        ${req.name}, ${req.whatsapp_number}, ${req.discipline}, ${req.age_group}, 
-        ${req.who_searched}, ${req.origin_channel}, ${req.interest_level || 'morno'}, 
-        ${req.observations || null}, ${req.status || 'novo_lead'}, ${req.unit_id || null}, 
+        ${req.name.trim()}, ${req.whatsapp_number.trim()}, ${req.discipline.trim()}, ${req.age_group.trim()}, 
+        ${req.who_searched.trim()}, ${req.origin_channel.trim()}, ${req.interest_level || 'morno'}, 
+        ${req.observations?.trim() || null}, ${req.status || 'novo_lead'}, ${req.unit_id || null}, 
         ${req.user_id || null}, ${req.scheduled_date || null}, ${JSON.stringify(req.ai_interaction_log) || null}, 
         ${req.tenant_id}, NOW()
       )
@@ -62,7 +102,7 @@ export const create = api<CreateLeadRequest, Lead>(
     `;
     
     if (!row) {
-      throw new Error("Failed to create lead");
+      throw APIError.internal("Falha ao criar lead");
     }
     
     // Create evento for lead creation
@@ -72,9 +112,9 @@ export const create = api<CreateLeadRequest, Lead>(
         lead_id: row.id,
         user_id: req.user_id,
         tipo_evento: 'lead_criado',
-        descricao: `Lead ${req.name} foi criado`,
+        descricao: `Lead ${req.name.trim()} foi criado`,
         dados_evento: {
-          origin_channel: req.origin_channel,
+          origin_channel: req.origin_channel.trim(),
           interest_level: req.interest_level || 'morno'
         }
       });
