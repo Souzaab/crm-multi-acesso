@@ -37,9 +37,9 @@ export default function PipelineChart({ data }: PipelineChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-gray-900/95 p-3 border border-gray-700 rounded-lg shadow-lg backdrop-blur">
+          <p className="font-medium text-gray-100">{label}</p>
+          <p className="text-sm text-gray-300">
             {payload[0].value} leads
           </p>
         </div>
@@ -50,16 +50,16 @@ export default function PipelineChart({ data }: PipelineChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-        <CardHeader>
-          <CardTitle className="text-gray-800">Pipeline de Vendas</CardTitle>
-          <CardDescription className="text-gray-600">
+      <Card className="bg-emerald-900/30 border-emerald-500/30 backdrop-blur-sm h-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-gray-100 text-sm">Pipeline de Vendas</CardTitle>
+          <CardDescription className="text-emerald-200 text-xs">
             Distribuição de leads por status
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-64 text-gray-500">
-            <p>Nenhum dado disponível</p>
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-sm">Nenhum dado disponível</p>
           </div>
         </CardContent>
       </Card>
@@ -67,34 +67,34 @@ export default function PipelineChart({ data }: PipelineChartProps) {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-      <CardHeader>
-        <CardTitle className="text-gray-800">Pipeline de Vendas</CardTitle>
-        <CardDescription className="text-gray-600">
-          Acompanhe a distribuição de leads por cada etapa do funil
+    <Card className="bg-emerald-900/30 border-emerald-500/30 backdrop-blur-sm h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-gray-100 text-sm">Pipeline de Vendas</CardTitle>
+        <CardDescription className="text-emerald-200 text-xs">
+          Distribuição por etapa do funil
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+      <CardContent className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 
               dataKey="status" 
               angle={-45} 
               textAnchor="end" 
-              height={80}
-              tick={{ fontSize: 11, fill: '#64748b' }}
-              axisLine={{ stroke: '#cbd5e1' }}
+              height={60}
+              tick={{ fontSize: 9, fill: '#9ca3af' }}
+              axisLine={{ stroke: '#6b7280' }}
             />
             <YAxis 
-              tick={{ fontSize: 12, fill: '#64748b' }}
-              axisLine={{ stroke: '#cbd5e1' }}
+              tick={{ fontSize: 10, fill: '#9ca3af' }}
+              axisLine={{ stroke: '#6b7280' }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar 
               dataKey="count" 
               fill="#10b981"
-              radius={[4, 4, 0, 0]}
+              radius={[2, 2, 0, 0]}
             />
           </BarChart>
         </ResponsiveContainer>

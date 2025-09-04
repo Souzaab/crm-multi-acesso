@@ -29,19 +29,19 @@ export default function ConversionChart({ data }: ConversionChartProps) {
   };
 
   return (
-    <Card className="bg-blue-900/30 border-blue-500/30 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-white">Leads Convertinos</CardTitle>
-        <CardDescription className="text-blue-200">
+    <Card className="bg-blue-900/30 border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-white text-sm">Conversão</CardTitle>
+        <CardDescription className="text-blue-200 text-xs">
           Taxa de conversão mensal
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
+      <CardContent className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={conversionData}>
             <XAxis 
               dataKey="month"
-              tick={{ fontSize: 11, fill: '#9ca3af' }}
+              tick={{ fontSize: 10, fill: '#9ca3af' }}
               axisLine={false}
             />
             <YAxis hide />

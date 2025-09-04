@@ -11,6 +11,8 @@ import ConvertedLeadsCard from '../components/dashboard/ConvertedLeadsCard';
 import ConversionChart from '../components/dashboard/ConversionChart';
 import DisciplineChart from '../components/dashboard/DisciplineChart';
 import DisciplineConversionChart from '../components/dashboard/DisciplineConversionChart';
+import PipelineChart from '../components/dashboard/PipelineChart';
+import RecentLeads from '../components/dashboard/RecentLeads';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import { useBackend } from '../hooks/useBackend';
 import { useTenant } from '../App';
@@ -81,22 +83,22 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white p-6">
-        <div className="space-y-6">
+      <div className="min-h-screen bg-black text-white p-4 lg:p-6">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h1>
               <p className="text-gray-400">Carregando dados...</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="bg-slate-900/50 border-gray-700">
-                <CardContent className="p-6">
+                <CardContent className="p-4">
                   <div className="animate-pulse">
-                    <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                    <div className="h-8 bg-gray-700 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-6 bg-gray-700 rounded w-1/2"></div>
                   </div>
                 </CardContent>
               </Card>
@@ -110,9 +112,9 @@ export default function Dashboard() {
   if (error) {
     console.error('Dashboard error:', error);
     return (
-      <div className="min-h-screen bg-black text-white p-6">
-        <div className="space-y-6">
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+      <div className="min-h-screen bg-black text-white p-4 lg:p-6">
+        <div className="space-y-4">
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h1>
           
           <Alert variant="destructive" className="bg-red-900/50 border-red-500/50">
             <AlertCircle className="h-4 w-4" />
@@ -122,7 +124,7 @@ export default function Dashboard() {
           </Alert>
           
           <Card className="border-red-500/50 bg-red-900/30">
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <p className="text-red-200 mb-4">
                 Não foi possível carregar os dados do dashboard. 
                 Verifique sua conexão e tente novamente.
@@ -145,22 +147,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="space-y-6">
+    <div className="min-h-screen bg-black text-white p-4 lg:p-6">
+      <div className="space-y-4 max-w-full overflow-hidden">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-            <p className="text-gray-400">
+            <h1 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h1>
+            <p className="text-gray-400 text-sm">
               Visão geral dos seus leads e métricas de conversão
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-500" />
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-40 bg-gray-900 border-gray-700 text-gray-300">
+                <SelectTrigger className="w-32 bg-gray-900 border-gray-700 text-gray-300 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-900 border-gray-700">
@@ -175,7 +177,7 @@ export default function Dashboard() {
               onClick={handleRefresh} 
               variant="outline" 
               size="sm"
-              className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-800"
+              className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-800 text-xs"
             >
               <RefreshCw className="h-4 w-4" />
               Atualizar
@@ -183,8 +185,8 @@ export default function Dashboard() {
             
             <Button 
               onClick={() => setIsCreateLeadOpen(true)}
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200"
+              size="sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 text-xs"
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Lead
@@ -193,10 +195,10 @@ export default function Dashboard() {
         </div>
 
         {/* Period Info */}
-        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-medium text-blue-300">
+            <span className="text-xs font-medium text-blue-300">
               Período: {periodLabels[selectedPeriod as keyof typeof periodLabels]}
             </span>
           </div>
@@ -205,34 +207,38 @@ export default function Dashboard() {
         {/* Metrics Cards */}
         <MetricsCards data={dashboardData} />
 
-        {/* Main Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Monthly Evolution - Full width on mobile, 2 columns on desktop */}
+        {/* Charts Grid - 3 columns on desktop, responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Monthly Evolution */}
           <div className="lg:col-span-2">
-            <MonthlyChart data={dashboardData?.monthly_evolution || []} />
+            <div className="h-80">
+              <MonthlyChart data={dashboardData?.monthly_evolution || []} />
+            </div>
           </div>
           
-          {/* Converted Leads Card */}
+          {/* Pipeline Chart */}
           <div className="lg:col-span-1">
-            <ConvertedLeadsCard data={dashboardData} />
+            <div className="h-80">
+              <PipelineChart data={dashboardData?.pipeline_data || []} />
+            </div>
           </div>
         </div>
 
-        {/* Secondary Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Leads Conversion Chart */}
-          <div className="lg:col-span-1">
-            <ConversionChart data={dashboardData} />
-          </div>
-          
+        {/* Secondary Charts Grid - 3 equal columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Discipline Distribution */}
-          <div className="lg:col-span-1">
+          <div className="h-80">
             <DisciplineChart data={dashboardData?.discipline_data || []} />
           </div>
           
-          {/* Discipline Conversion */}
-          <div className="lg:col-span-1">
-            <DisciplineConversionChart data={dashboardData} />
+          {/* Recent Leads */}
+          <div className="h-80">
+            <RecentLeads leads={dashboardData?.recent_leads || []} />
+          </div>
+          
+          {/* Conversion Chart */}
+          <div className="h-80">
+            <ConversionChart data={dashboardData} />
           </div>
         </div>
 

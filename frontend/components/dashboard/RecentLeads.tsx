@@ -36,45 +36,45 @@ export default function RecentLeads({ leads }: RecentLeadsProps) {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-rose-50 to-orange-50 border-rose-200">
-      <CardHeader>
-        <CardTitle className="text-gray-800 flex items-center gap-2">
-          <Clock className="h-5 w-5 text-rose-500" />
+    <Card className="bg-rose-900/30 border-rose-500/30 backdrop-blur-sm h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-gray-100 flex items-center gap-2 text-sm">
+          <Clock className="h-4 w-4 text-rose-400" />
           Leads Recentes
         </CardTitle>
-        <CardDescription className="text-gray-600">
-          Últimos leads cadastrados no sistema
+        <CardDescription className="text-rose-200 text-xs">
+          Últimos leads cadastrados
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="flex-1 overflow-hidden">
+        <div className="space-y-2 h-full overflow-y-auto">
           {leads.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium">Nenhum lead encontrado</p>
-              <p className="text-sm">Os novos leads aparecerão aqui</p>
+              <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <p className="text-sm font-medium">Nenhum lead encontrado</p>
+              <p className="text-xs">Os novos leads aparecerão aqui</p>
             </div>
           ) : (
-            leads.map((lead) => (
+            leads.slice(0, 5).map((lead) => (
               <div 
                 key={lead.id} 
-                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200"
+                className="flex items-center justify-between p-2 bg-white/5 border border-gray-700 rounded-lg hover:bg-white/10 transition-colors duration-200"
               >
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{lead.name}</h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-600">{lead.whatsapp_number}</span>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-gray-100 text-sm truncate">{lead.name}</h4>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-400 truncate">{lead.whatsapp_number}</span>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-green-100"
+                      className="h-4 w-4 p-0 hover:bg-green-100/10"
                       onClick={() => openWhatsApp(lead.whatsapp_number)}
                       title="Abrir no WhatsApp"
                     >
-                      <Phone className="h-3 w-3 text-green-600" />
+                      <Phone className="h-3 w-3 text-green-400" />
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500">
                     {new Date(lead.created_at).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: 'short',
@@ -85,7 +85,7 @@ export default function RecentLeads({ leads }: RecentLeadsProps) {
                 </div>
                 <Badge 
                   variant="outline"
-                  className={`text-xs font-medium ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}
+                  className={`text-xs font-medium ml-2 ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}`}
                 >
                   {statusLabels[lead.status] || lead.status}
                 </Badge>

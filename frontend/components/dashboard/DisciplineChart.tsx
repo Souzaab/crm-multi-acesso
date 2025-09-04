@@ -8,10 +8,10 @@ interface DisciplineChartProps {
 }
 
 const COLORS = [
-  '#ec4899', // pink - Evolunais
-  '#06b6d4', // cyan - Distributina  
-  '#3b82f6', // blue - Dectofinas
-  '#8b5cf6', // violet - Data Fvorica
+  '#ec4899', // pink
+  '#06b6d4', // cyan  
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
   '#10b981', // emerald
   '#f59e0b', // amber
   '#ef4444', // red
@@ -20,16 +20,11 @@ const COLORS = [
 
 export default function DisciplineChart({ data }: DisciplineChartProps) {
   const chartData = data.slice(0, 4).map((item, index) => ({
-    name: getDisplayName(item.discipline, index),
+    name: item.discipline,
     value: item.count,
     percentage: item.percentage,
     color: COLORS[index % COLORS.length],
   }));
-
-  function getDisplayName(discipline: string, index: number): string {
-    const displayNames = ['Evolunais', 'Distributina', 'Dectofinas', 'Data Fvorica'];
-    return displayNames[index] || discipline;
-  }
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -48,16 +43,16 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-100">Distribuições por Disciplinas</CardTitle>
-          <CardDescription className="text-gray-400">
-            Leads organizados por área de interesse
+      <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm h-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-gray-100 text-sm">Disciplinas</CardTitle>
+          <CardDescription className="text-gray-400 text-xs">
+            Distribuição por área
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-64 text-gray-500">
-            <p>Nenhum dado disponível</p>
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-sm">Nenhum dado disponível</p>
           </div>
         </CardContent>
       </Card>
@@ -65,72 +60,48 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
   }
 
   return (
-    <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-gray-100">Distribuições por Disciplinas</CardTitle>
+    <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-gray-100 text-sm">Disciplinas</CardTitle>
+        <CardDescription className="text-gray-400 text-xs">
+          Distribuição por área de interesse
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Bar Chart */}
-          <div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartData} layout="horizontal">
-                <XAxis type="number" hide />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
-                  axisLine={false}
-                  width={80}
+      <CardContent className="flex-1">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={25}
+              outerRadius={65}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color}
+                  stroke="transparent"
                 />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" radius={[0, 2, 2, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Pie Chart */}
-          <div>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.color}
-                      stroke="transparent"
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Legend */}
-            <div className="flex flex-wrap gap-3 mt-4 justify-center">
-              {chartData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs text-gray-400">{item.name}</span>
-                </div>
               ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+        
+        {/* Compact Legend */}
+        <div className="flex flex-wrap gap-2 mt-2 justify-center">
+          {chartData.map((item, index) => (
+            <div key={index} className="flex items-center gap-1">
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-xs text-gray-400 truncate max-w-20">{item.name}</span>
             </div>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>

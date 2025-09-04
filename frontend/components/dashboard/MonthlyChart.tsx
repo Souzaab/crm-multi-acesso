@@ -35,16 +35,16 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-gray-100">Evolução Mensal</CardTitle>
-          <CardDescription className="text-gray-400">
+      <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm h-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-gray-100 text-sm">Evolução Mensal</CardTitle>
+          <CardDescription className="text-gray-400 text-xs">
             Total de Leads
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-64 text-gray-500">
-            <p>Nenhum dado disponível</p>
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-sm">Nenhum dado disponível</p>
           </div>
         </CardContent>
       </Card>
@@ -52,15 +52,15 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
   }
 
   return (
-    <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-gray-100">Evolução Mensal</CardTitle>
-        <CardDescription className="text-gray-400">
-          Total de Leads
+    <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-gray-100 text-sm">Evolução Mensal</CardTitle>
+        <CardDescription className="text-gray-400 text-xs">
+          Total de Leads e Conversões
         </CardDescription>
       </CardHeader>
-      <CardContent className="bg-blue-900/20 rounded-lg p-4">
-        <ResponsiveContainer width="100%" height={300}>
+      <CardContent className="bg-blue-900/20 rounded-lg p-3 flex-1">
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
@@ -71,11 +71,11 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 
               dataKey="month" 
-              tick={{ fontSize: 12, fill: '#9ca3af' }}
+              tick={{ fontSize: 10, fill: '#9ca3af' }}
               axisLine={{ stroke: '#6b7280' }}
             />
             <YAxis 
-              tick={{ fontSize: 12, fill: '#9ca3af' }}
+              tick={{ fontSize: 10, fill: '#9ca3af' }}
               axisLine={{ stroke: '#6b7280' }}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -83,7 +83,7 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
               type="monotone"
               dataKey="Total de Leads"
               stroke="#3b82f6"
-              strokeWidth={3}
+              strokeWidth={2}
               fill="url(#colorLeads)"
             />
           </AreaChart>
