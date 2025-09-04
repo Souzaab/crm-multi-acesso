@@ -10,6 +10,8 @@ import {
   Menu,
   FileText,
   Activity,
+  Settings,
+  Wrench
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -26,6 +28,7 @@ const navigation = [
   { name: 'Unidades', href: '/units', icon: Building },
   { name: 'Usuários', href: '/users', icon: UserPlus },
   { name: 'Diagnósticos', href: '/diagnostics', icon: Activity },
+  { name: 'Ferramentas', href: '/tools', icon: Wrench },
 ];
 
 export default function Layout({ children }: LayoutProps) {

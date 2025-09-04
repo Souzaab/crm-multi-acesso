@@ -11,9 +11,18 @@ import Units from './pages/Units';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Diagnostics from './pages/Diagnostics';
+import Tools from './pages/Tools';
 import backend from '~backend/client';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000, // 30 seconds
+      refetchOnWindowFocus: false,
+      retry: 3,
+    },
+  },
+});
 
 const TenantContext = createContext<{
   selectedTenantId: string;
@@ -31,6 +40,8 @@ function MainApp() {
   const { data: unitsData, isLoading: isLoadingUnits } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
+    retry: 3,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
@@ -43,8 +54,9 @@ function MainApp() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Carregando...</h2>
-          <p className="text-muted-foreground">Configurando sua sessão</p>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Carregando CRM...</h2>
+          <p className="text-muted-foreground">Configurando conexão com Supabase</p>
+          <div className="mt-4 w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
@@ -69,6 +81,7 @@ function MainApp() {
           <Route path="/units" element={<Units />} />
           <Route path="/users" element={<Users />} />
           <Route path="/diagnostics" element={<Diagnostics />} />
+          <Route path="/tools" element={<Tools />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>

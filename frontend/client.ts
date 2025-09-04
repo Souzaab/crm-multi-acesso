@@ -35,13 +35,17 @@ const BROWSER = typeof globalThis === "object" && ("window" in globalThis);
 export class Client {
     public readonly agendamentos: agendamentos.ServiceClient
     public readonly anotacoes: anotacoes.ServiceClient
+    public readonly database: database.ServiceClient
     public readonly diagnostics: diagnostics.ServiceClient
     public readonly eventos: eventos.ServiceClient
+    public readonly health: health.ServiceClient
+    public readonly integration: integration.ServiceClient
     public readonly leads: leads.ServiceClient
     public readonly matriculas: matriculas.ServiceClient
     public readonly metrics: metrics.ServiceClient
     public readonly reports: reports.ServiceClient
     public readonly test: test.ServiceClient
+    public readonly tools: tools.ServiceClient
     public readonly units: units.ServiceClient
     public readonly users: users.ServiceClient
     public readonly whatsapp: whatsapp.ServiceClient
@@ -61,13 +65,17 @@ export class Client {
         const base = new BaseClient(this.target, this.options)
         this.agendamentos = new agendamentos.ServiceClient(base)
         this.anotacoes = new anotacoes.ServiceClient(base)
+        this.database = new database.ServiceClient(base)
         this.diagnostics = new diagnostics.ServiceClient(base)
         this.eventos = new eventos.ServiceClient(base)
+        this.health = new health.ServiceClient(base)
+        this.integration = new integration.ServiceClient(base)
         this.leads = new leads.ServiceClient(base)
         this.matriculas = new matriculas.ServiceClient(base)
         this.metrics = new metrics.ServiceClient(base)
         this.reports = new reports.ServiceClient(base)
         this.test = new test.ServiceClient(base)
+        this.tools = new tools.ServiceClient(base)
         this.units = new units.ServiceClient(base)
         this.users = new users.ServiceClient(base)
         this.whatsapp = new whatsapp.ServiceClient(base)
@@ -196,6 +204,32 @@ export namespace anotacoes {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
+import { getDatabaseIntegration as api_database_integration_details_getDatabaseIntegration } from "~backend/database/integration-details";
+
+export namespace database {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.getDatabaseIntegration = this.getDatabaseIntegration.bind(this)
+        }
+
+        /**
+         * Shows detailed information about the integrated database.
+         */
+        public async getDatabaseIntegration(): Promise<ResponseType<typeof api_database_integration_details_getDatabaseIntegration>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/database/integration-info`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_database_integration_details_getDatabaseIntegration>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
 import { testConnectivity as api_diagnostics_connectivity_testConnectivity } from "~backend/diagnostics/connectivity";
 import { testPerformance as api_diagnostics_performance_testPerformance } from "~backend/diagnostics/performance";
 import { testSecurity as api_diagnostics_security_testSecurity } from "~backend/diagnostics/security";
@@ -282,6 +316,58 @@ export namespace eventos {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/eventos`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_eventos_list_list>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { check as api_health_check_check } from "~backend/health/check";
+
+export namespace health {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.check = this.check.bind(this)
+        }
+
+        /**
+         * Comprehensive health check for the entire system.
+         */
+        public async check(): Promise<ResponseType<typeof api_health_check_check>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/health`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_health_check_check>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { testSupabaseIntegration as api_integration_supabase_testSupabaseIntegration } from "~backend/integration/supabase";
+
+export namespace integration {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.testSupabaseIntegration = this.testSupabaseIntegration.bind(this)
+        }
+
+        /**
+         * Comprehensive Supabase integration testing and validation.
+         */
+        public async testSupabaseIntegration(): Promise<ResponseType<typeof api_integration_supabase_testSupabaseIntegration>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/integration/supabase`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_integration_supabase_testSupabaseIntegration>
         }
     }
 }
@@ -527,6 +613,43 @@ export namespace test {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/test/connection`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_test_connection_testConnection>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { runMaintenance as api_tools_maintenance_runMaintenance } from "~backend/tools/maintenance";
+import { setupTools as api_tools_setup_setupTools } from "~backend/tools/setup";
+
+export namespace tools {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.runMaintenance = this.runMaintenance.bind(this)
+            this.setupTools = this.setupTools.bind(this)
+        }
+
+        /**
+         * Comprehensive maintenance tool for database optimization and cleanup.
+         */
+        public async runMaintenance(): Promise<ResponseType<typeof api_tools_maintenance_runMaintenance>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/tools/maintenance`, {method: "POST", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_tools_maintenance_runMaintenance>
+        }
+
+        /**
+         * Automated setup and configuration tool for the CRM system.
+         */
+        public async setupTools(): Promise<ResponseType<typeof api_tools_setup_setupTools>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/tools/setup`, {method: "POST", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_tools_setup_setupTools>
         }
     }
 }
