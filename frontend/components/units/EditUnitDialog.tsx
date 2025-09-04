@@ -80,10 +80,10 @@ export default function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gray-900 border-blue-500/30 text-white">
         <DialogHeader>
-          <DialogTitle>Editar Unidade</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Editar Unidade</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Atualize as informações da unidade.
           </DialogDescription>
         </DialogHeader>
@@ -93,11 +93,19 @@ export default function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDia
             <FormField
               control={form.control}
               name="name"
+              rules={{ 
+                required: 'Nome é obrigatório',
+                minLength: { value: 2, message: 'Nome deve ter pelo menos 2 caracteres' }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel className="text-gray-300">Nome *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome da unidade" {...field} />
+                    <Input 
+                      placeholder="Nome da unidade" 
+                      {...field} 
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -109,9 +117,13 @@ export default function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDia
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Endereço</FormLabel>
+                  <FormLabel className="text-gray-300">Endereço</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Endereço completo da unidade" {...field} />
+                    <Textarea 
+                      placeholder="Endereço completo da unidade" 
+                      {...field} 
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -123,24 +135,45 @@ export default function EditUnitDialog({ unit, open, onOpenChange }: EditUnitDia
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telefone</FormLabel>
+                  <FormLabel className="text-gray-300">Telefone</FormLabel>
                   <FormControl>
-                    <Input placeholder="(11) 99999-9999" {...field} />
+                    <Input 
+                      placeholder="(11) 99999-9999" 
+                      {...field}
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length >= 11) {
+                          value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                        } else if (value.length >= 7) {
+                          value = value.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+                        } else if (value.length >= 3) {
+                          value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+                        }
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={updateUnitMutation.isPending}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateUnitMutation.isPending}>
+              <Button 
+                type="submit" 
+                disabled={updateUnitMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
                 {updateUnitMutation.isPending ? 'Salvando...' : 'Salvar'}
               </Button>
             </div>

@@ -80,10 +80,10 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gray-900 border-blue-500/30 text-white">
         <DialogHeader>
-          <DialogTitle>Criar Novo Usuário</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Criar Novo Usuário</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Preencha as informações do novo usuário.
           </DialogDescription>
         </DialogHeader>
@@ -93,11 +93,19 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="name"
+              rules={{ 
+                required: 'Nome é obrigatório',
+                minLength: { value: 2, message: 'Nome deve ter pelo menos 2 caracteres' }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel className="text-gray-300">Nome *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do usuário" {...field} />
+                    <Input 
+                      placeholder="Nome do usuário" 
+                      {...field} 
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -107,11 +115,23 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="email"
+              rules={{ 
+                required: 'Email é obrigatório',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Email inválido'
+                }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-gray-300">Email *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="email@exemplo.com" {...field} />
+                    <Input 
+                      type="email" 
+                      placeholder="email@exemplo.com" 
+                      {...field} 
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,11 +141,20 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
             <FormField
               control={form.control}
               name="password_hash"
+              rules={{ 
+                required: 'Senha é obrigatória',
+                minLength: { value: 6, message: 'Senha deve ter pelo menos 6 caracteres' }
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <FormLabel className="text-gray-300">Senha *</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Senha do usuário" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="Senha do usuário" 
+                      {...field} 
+                      className="bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -137,16 +166,16 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Função</FormLabel>
+                  <FormLabel className="text-gray-300">Função</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-blue-500/30 text-white">
                         <SelectValue placeholder="Selecione a função" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="user">Usuário</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="user" className="text-white hover:bg-gray-800">Usuário</SelectItem>
+                      <SelectItem value="admin" className="text-white hover:bg-gray-800">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -160,16 +189,16 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
                 name="unit_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unidade</FormLabel>
+                    <FormLabel className="text-gray-300">Unidade</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-black/50 border-blue-500/30 text-white">
                           <SelectValue placeholder="Selecione a unidade" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-900 border-gray-700">
                         {units.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
+                          <SelectItem key={unit.id} value={unit.id} className="text-white hover:bg-gray-800">
                             {unit.name}
                           </SelectItem>
                         ))}
@@ -181,15 +210,21 @@ export default function CreateUserDialog({ open, onOpenChange, units, selectedTe
               />
             )}
             
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={createUserMutation.isPending}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createUserMutation.isPending}>
+              <Button 
+                type="submit" 
+                disabled={createUserMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
                 {createUserMutation.isPending ? 'Criando...' : 'Criar Usuário'}
               </Button>
             </div>

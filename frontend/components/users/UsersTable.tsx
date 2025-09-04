@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Users, Shield, User } from 'lucide-react';
 import type { User } from '~backend/users/create';
 import type { Unit } from '~backend/units/create';
 
@@ -24,54 +25,63 @@ export default function UsersTable({ users, units, isLoading }: UsersTableProps)
     return unit?.name || 'N/A';
   };
 
-  const getRoleBadge = (role: string) => {
-    const roleColors = {
-      admin: 'bg-red-100 text-red-800',
-      user: 'bg-blue-100 text-blue-800',
-    };
+  const getRoleBadge = (role: string, is_admin: boolean, is_master: boolean) => {
+    if (is_master) {
+      return (
+        <Badge className="bg-purple-900/50 text-purple-300 border-purple-500/30">
+          <Shield className="h-3 w-3 mr-1" />
+          Master
+        </Badge>
+      );
+    }
     
-    const roleLabels = {
-      admin: 'Administrador',
-      user: 'Usuário',
-    };
-
+    if (is_admin || role === 'admin') {
+      return (
+        <Badge className="bg-red-900/50 text-red-300 border-red-500/30">
+          <Shield className="h-3 w-3 mr-1" />
+          Administrador
+        </Badge>
+      );
+    }
+    
     return (
-      <Badge className={roleColors[role as keyof typeof roleColors] || 'bg-gray-100 text-gray-800'}>
-        {roleLabels[role as keyof typeof roleLabels] || role}
+      <Badge className="bg-blue-900/50 text-blue-300 border-blue-500/30">
+        <User className="h-3 w-3 mr-1" />
+        Usuário
       </Badge>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="border rounded-lg">
+      <div className="border border-blue-500/30 rounded-lg overflow-x-auto bg-black/30 backdrop-blur-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Função</TableHead>
-              <TableHead>Unidade</TableHead>
-              <TableHead>Data de Criação</TableHead>
+            <TableRow className="border-blue-500/20 hover:bg-gray-800/50">
+              <TableHead className="text-gray-300">Nome</TableHead>
+              <TableHead className="text-gray-300">Email</TableHead>
+              <TableHead className="text-gray-300">Função</TableHead>
+              <TableHead className="text-gray-300">Unidade</TableHead>
+              <TableHead className="text-gray-300">Data de Criação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(3)].map((_, i) => (
-              <TableRow key={i}>
+              <TableRow key={i} className="border-blue-500/20 hover:bg-gray-800/30">
                 <TableCell>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-20"></div>
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-24"></div>
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-20"></div>
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 bg-muted rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-16"></div>
                 </TableCell>
               </TableRow>
             ))}
@@ -82,32 +92,38 @@ export default function UsersTable({ users, units, isLoading }: UsersTableProps)
   }
 
   return (
-    <div className="border rounded-lg">
+    <div className="border border-blue-500/30 rounded-lg overflow-x-auto bg-black/30 backdrop-blur-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Função</TableHead>
-            <TableHead>Unidade</TableHead>
-            <TableHead>Data de Criação</TableHead>
+          <TableRow className="border-blue-500/20 hover:bg-gray-800/50">
+            <TableHead className="text-gray-300">Nome</TableHead>
+            <TableHead className="text-gray-300">Email</TableHead>
+            <TableHead className="text-gray-300">Função</TableHead>
+            <TableHead className="text-gray-300">Unidade</TableHead>
+            <TableHead className="text-gray-300">Data de Criação</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {users.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                Nenhum usuário encontrado
+            <TableRow className="border-blue-500/20">
+              <TableCell colSpan={5} className="text-center py-12 text-gray-400">
+                <div className="flex flex-col items-center gap-2">
+                  <Users className="h-8 w-8 text-gray-500" />
+                  <p className="text-lg font-medium">Nenhum usuário encontrado</p>
+                  <p className="text-sm">Adicione usuários para começar</p>
+                </div>
               </TableCell>
             </TableRow>
           ) : (
             users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{getRoleBadge(user.role)}</TableCell>
-                <TableCell>{getUnitName(user.unit_id)}</TableCell>
+              <TableRow key={user.id} className="border-blue-500/20 hover:bg-gray-800/30 transition-colors">
+                <TableCell className="font-medium text-white">{user.name}</TableCell>
+                <TableCell className="text-gray-300">{user.email}</TableCell>
                 <TableCell>
+                  {getRoleBadge(user.role, user.is_admin, user.is_master)}
+                </TableCell>
+                <TableCell className="text-gray-300">{getUnitName(user.unit_id)}</TableCell>
+                <TableCell className="text-gray-300">
                   {new Date(user.created_at).toLocaleDateString('pt-BR')}
                 </TableCell>
               </TableRow>
