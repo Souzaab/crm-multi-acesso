@@ -10,83 +10,63 @@ interface MetricsCardsProps {
 export default function MetricsCards({ data }: MetricsCardsProps) {
   const metrics = [
     {
-      title: 'Total de Leads',
+      title: 'Total Leads',
       value: data?.total_leads?.toString() || '0',
-      description: 'Leads cadastrados no período',
+      subtitle: `Total de Leads (${data?.total_leads || 0})`,
       icon: Users,
-      color: 'text-slate-600',
-      bgColor: 'bg-slate-50',
-      borderColor: 'border-slate-200',
-      iconColor: 'text-slate-500',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-900/30',
+      borderColor: 'border-blue-500/30',
+      iconColor: 'text-blue-400',
+    },
+    {
+      title: 'Taxas',
+      value: `${data?.scheduling_rate?.toFixed(1) || 0}%`,
+      subtitle: `Taxa de Agendamento (${data?.attendance_rate?.toFixed(2) || 0}%)`,
+      icon: Calendar,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-900/30',
+      borderColor: 'border-blue-500/30',
+      iconColor: 'text-blue-400',
     },
     {
       title: 'Novos Leads',
-      value: data?.new_leads?.toString() || '0',
-      description: 'Aguardando primeiro contato',
+      value: `${data?.attendance_rate?.toFixed(2) || 0}%`,
+      subtitle: 'Taxa de Comparecimento',
       icon: UserPlus,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      iconColor: 'text-blue-500',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-900/30',
+      borderColor: 'border-blue-500/30',
+      iconColor: 'text-blue-400',
     },
     {
-      title: 'Taxa de Agendamento',
-      value: `${data?.scheduling_rate?.toFixed(1) || 0}%`,
-      description: 'Leads que agendaram visita',
-      icon: Calendar,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      iconColor: 'text-amber-500',
-    },
-    {
-      title: 'Taxa de Comparecimento',
-      value: `${data?.attendance_rate?.toFixed(1) || 0}%`,
-      description: 'Comparecimento nas visitas',
-      icon: UserCheck,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      borderColor: 'border-emerald-200',
-      iconColor: 'text-emerald-500',
-    },
-    {
-      title: 'Taxa de Conversão',
-      value: `${data?.conversion_rate?.toFixed(1) || 0}%`,
-      description: 'Leads convertidos em matrículas',
+      title: 'Taxa de Convertidos',
+      value: `${data?.conversion_rate?.toFixed(2) || 0}%`,
+      subtitle: 'Taxa de Conversão',
       icon: Target,
-      color: 'text-violet-600',
-      bgColor: 'bg-violet-50',
-      borderColor: 'border-violet-200',
-      iconColor: 'text-violet-500',
-    },
-    {
-      title: 'Leads Convertidos',
-      value: data?.converted_leads?.toString() || '0',
-      description: 'Matrículas efetivadas',
-      icon: TrendingUp,
-      color: 'text-rose-600',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-200',
-      iconColor: 'text-rose-500',
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-900/30',
+      borderColor: 'border-blue-500/30',
+      iconColor: 'text-blue-400',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
           <Card 
             key={metric.title} 
-            className={`${metric.bgColor} ${metric.borderColor} border-2 transition-all duration-200 hover:shadow-md`}
+            className={`${metric.bgColor} ${metric.borderColor} border-2 bg-slate-900/50 backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:border-blue-400/50`}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">{metric.title}</CardTitle>
-              <Icon className={`h-4 w-4 ${metric.iconColor}`} />
+              <CardTitle className="text-sm font-medium text-gray-300">{metric.title}</CardTitle>
+              <Icon className={`h-5 w-5 ${metric.iconColor}`} />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${metric.color}`}>{metric.value}</div>
-              <p className="text-xs text-gray-600 mt-1">{metric.description}</p>
+              <div className={`text-3xl font-bold ${metric.color} mb-1`}>{metric.value}</div>
+              <p className="text-xs text-gray-400">{metric.subtitle}</p>
             </CardContent>
           </Card>
         );

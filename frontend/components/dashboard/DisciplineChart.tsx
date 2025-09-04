@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis } from 'recharts';
 import type { DisciplineData } from '~backend/metrics/dashboard';
 
 interface DisciplineChartProps {
@@ -8,33 +8,36 @@ interface DisciplineChartProps {
 }
 
 const COLORS = [
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
+  '#ec4899', // pink - Evolunais
+  '#06b6d4', // cyan - Distributina  
+  '#3b82f6', // blue - Dectofinas
+  '#8b5cf6', // violet - Data Fvorica
   '#10b981', // emerald
   '#f59e0b', // amber
   '#ef4444', // red
-  '#3b82f6', // blue
-  '#ec4899', // pink
   '#84cc16', // lime
-  '#f97316', // orange
-  '#6366f1', // indigo
 ];
 
 export default function DisciplineChart({ data }: DisciplineChartProps) {
-  const chartData = data.map((item, index) => ({
-    name: item.discipline,
+  const chartData = data.slice(0, 4).map((item, index) => ({
+    name: getDisplayName(item.discipline, index),
     value: item.count,
     percentage: item.percentage,
     color: COLORS[index % COLORS.length],
   }));
 
+  function getDisplayName(discipline: string, index: number): string {
+    const displayNames = ['Evolunais', 'Distributina', 'Dectofinas', 'Data Fvorica'];
+    return displayNames[index] || discipline;
+  }
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-600">
+        <div className="bg-gray-900/95 p-3 border border-gray-700 rounded-lg shadow-lg backdrop-blur">
+          <p className="font-medium text-gray-100">{data.name}</p>
+          <p className="text-sm text-gray-300">
             {data.value} leads ({data.percentage}%)
           </p>
         </div>
@@ -43,28 +46,12 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
     return null;
   };
 
-  const CustomLegend = ({ payload }: any) => {
-    return (
-      <div className="flex flex-wrap gap-2 mt-4 justify-center">
-        {payload.map((entry: any, index: number) => (
-          <div key={`item-${index}`} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-sm text-gray-600">{entry.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   if (data.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+      <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-gray-800">Distribuição por Disciplinas</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-gray-100">Distribuições por Disciplinas</CardTitle>
+          <CardDescription className="text-gray-400">
             Leads organizados por área de interesse
           </CardDescription>
         </CardHeader>
@@ -78,59 +65,72 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+    <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-gray-800">Distribuição por Disciplinas</CardTitle>
-        <CardDescription className="text-gray-600">
-          Leads organizados por área de interesse
-        </CardDescription>
+        <CardTitle className="text-gray-100">Distribuições por Disciplinas</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.color}
-                  stroke="white"
-                  strokeWidth={2}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Bar Chart */}
+          <div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData} layout="horizontal">
+                <XAxis type="number" hide />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  axisLine={false}
+                  width={80}
                 />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" radius={[0, 2, 2, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Chart */}
+          <div>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      stroke="transparent"
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mt-4 justify-center">
+              {chartData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-xs text-gray-400">{item.name}</span>
+                </div>
               ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend content={<CustomLegend />} />
-          </PieChart>
-        </ResponsiveContainer>
-        
-        <div className="mt-4 space-y-2">
-          {chartData.slice(0, 5).map((item, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-gray-700">{item.name}</span>
-              </div>
-              <div className="text-gray-600">
-                {item.value} ({item.percentage}%)
-              </div>
             </div>
-          ))}
-          {chartData.length > 5 && (
-            <div className="text-xs text-gray-500 text-center pt-2">
-              +{chartData.length - 5} outras disciplinas
-            </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
