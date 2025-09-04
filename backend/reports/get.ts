@@ -1,15 +1,14 @@
 import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { reportsDB } from "./db";
-import { getAuthData } from "~encore/auth";
 import { APIError } from "encore.dev/api";
 import log from "encore.dev/log";
 
 export interface GetReportsRequest {
+  tenant_id: Query<string>;
   unit_id?: Query<string>;
   start_date?: Query<string>;
   end_date?: Query<string>;
-  tenant_id?: Query<string>; // For master users
 }
 
 export interface ReportItem {
@@ -33,19 +32,12 @@ export interface GetReportsResponse {
 
 // Retrieves a collection of reports for the dashboard.
 export const getReports = api<GetReportsRequest, GetReportsResponse>(
-  { expose: true, auth: true, method: "GET", path: "/reports" },
+  { expose: true, method: "GET", path: "/reports" },
   async (req) => {
     try {
       log.info("Reports request received", { req });
       
-      const auth = getAuthData()!;
-      let tenantId = auth.tenant_id;
-
-      if (auth.is_master && req.tenant_id) {
-        tenantId = req.tenant_id;
-      } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
-        throw APIError.permissionDenied("You can only access your own tenant's data.");
-      }
+      const tenantId = req.tenant_id;
 
       if (!tenantId) {
         throw APIError.invalidArgument("tenant_id is required.");

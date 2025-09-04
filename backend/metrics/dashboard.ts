@@ -1,11 +1,10 @@
 import { api, APIError } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { metricsDB } from "./db";
-import { getAuthData } from "~encore/auth";
 import log from "encore.dev/log";
 
 export interface GetDashboardRequest {
-  tenant_id?: Query<string>; // For master users
+  tenant_id: Query<string>;
   unit_id?: Query<string>;
   start_date?: Query<string>;
   end_date?: Query<string>;
@@ -52,21 +51,12 @@ export interface RecentLead {
 
 // Retrieves dashboard metrics and data for a tenant.
 export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
-  { expose: true, auth: true, method: "GET", path: "/metrics/dashboard" },
+  { expose: true, method: "GET", path: "/metrics/dashboard" },
   async (req) => {
     try {
       log.info("Dashboard request received", { req });
       
-      const auth = getAuthData()!;
-      let tenantId = auth.tenant_id;
-
-      // Master user can specify a tenant_id, otherwise it's the user's own tenant.
-      if (auth.is_master && req.tenant_id) {
-        tenantId = req.tenant_id;
-      } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
-        // Non-master user trying to access other tenant's data
-        throw APIError.permissionDenied("You can only access your own tenant's data.");
-      }
+      const tenantId = req.tenant_id;
 
       if (!tenantId) {
         throw APIError.invalidArgument("tenant_id is required.");

@@ -2,7 +2,6 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
-import { useAuth, AuthProvider } from './hooks/useAuth';
 import Layout from './components/Layout';
 import TenantSelector from './components/TenantSelector';
 import Dashboard from './pages/Dashboard';
@@ -11,9 +10,7 @@ import Leads from './pages/Leads';
 import Units from './pages/Units';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
-import Login from './pages/Login';
-import { useBackend } from './hooks/useBackend';
-import ProtectedRoute from './components/ProtectedRoute';
+import backend from '~backend/client';
 
 const queryClient = new QueryClient();
 
@@ -28,23 +25,20 @@ const TenantContext = createContext<{
 export const useTenant = () => useContext(TenantContext);
 
 function MainApp() {
-  const { user } = useAuth();
-  const backend = useBackend();
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
 
   const { data: unitsData, isLoading: isLoadingUnits } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
-    enabled: !!user,
   });
 
   useEffect(() => {
-    if (user && !selectedTenantId) {
-      setSelectedTenantId(user.tenant_id);
+    if (unitsData?.units && unitsData.units.length > 0 && !selectedTenantId) {
+      setSelectedTenantId(unitsData.units[0].id);
     }
-  }, [user, selectedTenantId]);
+  }, [unitsData, selectedTenantId]);
 
-  if (!user || isLoadingUnits || !selectedTenantId) {
+  if (isLoadingUnits || !selectedTenantId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -63,7 +57,7 @@ function MainApp() {
             tenants={unitsData?.units || []}
             selectedTenantId={selectedTenantId}
             onTenantChange={setSelectedTenantId}
-            isMaster={user.is_master}
+            isMaster={true}
           />
         </div>
         <Routes>
@@ -80,31 +74,6 @@ function MainApp() {
   );
 }
 
-function AppRouter() {
-  const { isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <h2 className="text-2xl font-bold text-foreground">Verificando sessão...</h2>
-      </div>
-    );
-  }
-
-  return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/*" element={
-          <ProtectedRoute>
-            <MainApp />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </Router>
-  );
-}
-
 export default function App() {
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -117,10 +86,12 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppRouter />
+      <Router>
+        <Routes>
+          <Route path="/*" element={<MainApp />} />
+        </Routes>
         <Toaster />
-      </AuthProvider>
+      </Router>
     </QueryClientProvider>
   );
 }
