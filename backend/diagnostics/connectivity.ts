@@ -219,7 +219,7 @@ async function testBasicQueries(): Promise<ConnectivityTest> {
 
 async function testTableAccess(): Promise<ConnectivityTest> {
   const startTime = Date.now();
-  const tablesToTest = ['units', 'leads', 'users', 'agendamentos', 'matriculas'];
+  const tablesToTest = ['units', 'leads', 'users', 'agendamentos', 'matriculas', 'anotacoes', 'eventos'];
   const results: string[] = [];
   let hasErrors = false;
   let errorMessage = '';
@@ -227,9 +227,9 @@ async function testTableAccess(): Promise<ConnectivityTest> {
   try {
     for (const table of tablesToTest) {
       try {
-        const result = await diagnosticsDB.queryRow<{ count: number }>`
-          SELECT COUNT(*) as count FROM ${table}
-        `;
+        const result = await diagnosticsDB.rawQueryRow<{ count: string }>(
+          `SELECT COUNT(*) as count FROM "${table}"`
+        );
         results.push(`${table}: ${result?.count || 0} registros`);
       } catch (tableError) {
         hasErrors = true;
