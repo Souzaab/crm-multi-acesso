@@ -11,7 +11,8 @@ import {
   FileText,
   Activity,
   Settings,
-  Wrench
+  Wrench,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Usuários', href: '/users', icon: UserPlus },
   { name: 'Diagnósticos', href: '/diagnostics', icon: Activity },
   { name: 'Ferramentas', href: '/tools', icon: Wrench },
+  { name: 'Banco de Dados', href: '/database', icon: Database },
 ];
 
 export default function Layout({ children }: LayoutProps) {
