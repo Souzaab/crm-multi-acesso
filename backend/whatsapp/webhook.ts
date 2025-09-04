@@ -136,7 +136,7 @@ function extractLeadDataFromMessage(message: string) {
                    message.match(/eu sou ([a-zA-ZÀ-ÿ\s]+)/i) ||
                    message.match(/me chamo ([a-zA-ZÀ-ÿ\s]+)/i);
   
-  const disciplines = ['natação', 'musculação', 'pilates', 'yoga', 'crossfit', 'dança', 'funcional'];
+  const disciplines = ['português', 'matemática', 'japonês', 'inglês'];
   const foundDiscipline = disciplines.find(d => lowerMessage.includes(d));
   
   const ageGroups = ['infantil', 'adolescente', 'adulto', 'idoso'];

@@ -34,7 +34,7 @@ const channelOptions = [
 ];
 
 const disciplineOptions = [
-  'Natação', 'Musculação', 'Pilates', 'Yoga', 'CrossFit', 'Dança', 'Funcional', 'Lutas', 'Outros'
+  'Português', 'Matemática', 'Japonês', 'Inglês'
 ];
 
 export default function LeadFilters({ filters, onFiltersChange }: LeadFiltersProps) {

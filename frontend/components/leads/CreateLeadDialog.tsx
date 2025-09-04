@@ -212,26 +212,10 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-gray-900 border-gray-700">
-                      <SelectItem value="Natação" className="text-white hover:bg-gray-800">Natação</SelectItem>
-                      <SelectItem value="Musculação" className="text-white hover:bg-gray-800">Musculação</SelectItem>
-                      <SelectItem value="Pilates" className="text-white hover:bg-gray-800">Pilates</SelectItem>
-                      <SelectItem value="Yoga" className="text-white hover:bg-gray-800">Yoga</SelectItem>
-                      <SelectItem value="CrossFit" className="text-white hover:bg-gray-800">CrossFit</SelectItem>
-                      <SelectItem value="Dança" className="text-white hover:bg-gray-800">Dança</SelectItem>
-                      <SelectItem value="Funcional" className="text-white hover:bg-gray-800">Funcional</SelectItem>
-                      <SelectItem value="Lutas" className="text-white hover:bg-gray-800">Lutas</SelectItem>
-                      <SelectItem value="Matemática" className="text-white hover:bg-gray-800">Matemática</SelectItem>
-                      <SelectItem value="Inglês" className="text-white hover:bg-gray-800">Inglês</SelectItem>
                       <SelectItem value="Português" className="text-white hover:bg-gray-800">Português</SelectItem>
-                      <SelectItem value="Ciências" className="text-white hover:bg-gray-800">Ciências</SelectItem>
-                      <SelectItem value="História" className="text-white hover:bg-gray-800">História</SelectItem>
-                      <SelectItem value="Geografia" className="text-white hover:bg-gray-800">Geografia</SelectItem>
-                      <SelectItem value="Física" className="text-white hover:bg-gray-800">Física</SelectItem>
-                      <SelectItem value="Química" className="text-white hover:bg-gray-800">Química</SelectItem>
-                      <SelectItem value="Biologia" className="text-white hover:bg-gray-800">Biologia</SelectItem>
-                      <SelectItem value="Música" className="text-white hover:bg-gray-800">Música</SelectItem>
-                      <SelectItem value="Arte" className="text-white hover:bg-gray-800">Arte</SelectItem>
-                      <SelectItem value="Outros" className="text-white hover:bg-gray-800">Outros</SelectItem>
+                      <SelectItem value="Matemática" className="text-white hover:bg-gray-800">Matemática</SelectItem>
+                      <SelectItem value="Japonês" className="text-white hover:bg-gray-800">Japonês</SelectItem>
+                      <SelectItem value="Inglês" className="text-white hover:bg-gray-800">Inglês</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
