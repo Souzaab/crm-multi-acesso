@@ -40,6 +40,7 @@ export class Client {
     public readonly matriculas: matriculas.ServiceClient
     public readonly metrics: metrics.ServiceClient
     public readonly reports: reports.ServiceClient
+    public readonly test: test.ServiceClient
     public readonly units: units.ServiceClient
     public readonly users: users.ServiceClient
     public readonly whatsapp: whatsapp.ServiceClient
@@ -64,6 +65,7 @@ export class Client {
         this.matriculas = new matriculas.ServiceClient(base)
         this.metrics = new metrics.ServiceClient(base)
         this.reports = new reports.ServiceClient(base)
+        this.test = new test.ServiceClient(base)
         this.units = new units.ServiceClient(base)
         this.users = new users.ServiceClient(base)
         this.whatsapp = new whatsapp.ServiceClient(base)
@@ -454,6 +456,43 @@ export namespace reports {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/reports`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_reports_get_getReports>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { testConnection as api_test_connection_testConnection } from "~backend/test/connection";
+import { listTables as api_test_tables_listTables } from "~backend/test/tables";
+
+export namespace test {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.listTables = this.listTables.bind(this)
+            this.testConnection = this.testConnection.bind(this)
+        }
+
+        /**
+         * Lists all tables in the public schema.
+         */
+        public async listTables(): Promise<ResponseType<typeof api_test_tables_listTables>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/test/tables`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_test_tables_listTables>
+        }
+
+        /**
+         * Tests the database connection by executing SELECT NOW().
+         */
+        public async testConnection(): Promise<ResponseType<typeof api_test_connection_testConnection>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/test/connection`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_test_connection_testConnection>
         }
     }
 }
