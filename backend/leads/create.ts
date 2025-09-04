@@ -154,10 +154,11 @@ export const create = api<CreateLeadRequest, Lead>(
           lead_id: row.id,
           user_id: req.user_id,
           tipo_evento: 'lead_criado',
-          descricao: `Lead ${req.name.trim()} foi criado`,
+          descricao: `Lead ${req.name.trim()} foi criado via ${req.origin_channel.trim()}`,
           dados_evento: {
             origin_channel: req.origin_channel.trim(),
-            interest_level: req.interest_level || 'morno'
+            interest_level: req.interest_level || 'morno',
+            status: req.status || 'novo_lead'
           }
         });
       } catch (error) {

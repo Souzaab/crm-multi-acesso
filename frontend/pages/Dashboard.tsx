@@ -67,7 +67,7 @@ export default function Dashboard() {
       return backend.metrics.getDashboard(params);
     },
     enabled: !!selectedTenantId,
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time sync
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
@@ -81,6 +81,10 @@ export default function Dashboard() {
     refetch();
   };
 
+  const handleCreateLead = () => {
+    setIsCreateLeadOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white p-4 lg:p-6">
@@ -88,7 +92,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h1>
-              <p className="text-gray-400">Carregando dados...</p>
+              <p className="text-gray-400">Carregando dados sincronizados...</p>
             </div>
           </div>
           
@@ -127,7 +131,7 @@ export default function Dashboard() {
             <CardContent className="p-4">
               <p className="text-red-200 mb-4">
                 Não foi possível carregar os dados do dashboard. 
-                Verifique sua conexão e tente novamente.
+                Verifique a conexão com o Supabase e tente novamente.
               </p>
               <Button onClick={handleRefresh} variant="outline" className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-800">
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -154,7 +158,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-white">Dashboard</h1>
             <p className="text-gray-400 text-sm">
-              Visão geral dos seus leads e métricas de conversão
+              Visão geral dos seus leads - Dados sincronizados em tempo real com Supabase
             </p>
           </div>
           
@@ -180,11 +184,11 @@ export default function Dashboard() {
               className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-800 text-xs"
             >
               <RefreshCw className="h-4 w-4" />
-              Atualizar
+              Sincronizar
             </Button>
             
             <Button 
-              onClick={() => setIsCreateLeadOpen(true)}
+              onClick={handleCreateLead}
               size="sm"
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 text-xs"
             >
@@ -196,11 +200,16 @@ export default function Dashboard() {
 
         {/* Period Info */}
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-blue-400" />
-            <span className="text-xs font-medium text-blue-300">
-              Período: {periodLabels[selectedPeriod as keyof typeof periodLabels]}
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-400" />
+              <span className="text-xs font-medium text-blue-300">
+                Período: {periodLabels[selectedPeriod as keyof typeof periodLabels]}
+              </span>
+            </div>
+            <div className="text-xs text-blue-300">
+              Última sincronização: {new Date().toLocaleTimeString('pt-BR')}
+            </div>
           </div>
         </div>
 

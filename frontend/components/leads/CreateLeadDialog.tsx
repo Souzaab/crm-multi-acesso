@@ -64,12 +64,23 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
 
   const createLeadMutation = useMutation({
     mutationFn: (data: CreateLeadRequest) => backend.leads.create(data),
-    onSuccess: () => {
+    onSuccess: (newLead) => {
+      // Invalidate and refetch leads data
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(['leads', selectedTenantId], (oldData: any) => {
+        if (!oldData?.leads) return { leads: [newLead] };
+        return {
+          ...oldData,
+          leads: [newLead, ...oldData.leads]
+        };
+      });
+      
       toast({
         title: 'Sucesso',
-        description: 'Lead criado com sucesso',
+        description: `Lead "${newLead.name}" criado com sucesso`,
       });
       form.reset();
       onOpenChange(false);
@@ -112,13 +123,25 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
     });
   };
 
+  const formatWhatsApp = (value: string) => {
+    let cleaned = value.replace(/\D/g, '');
+    if (cleaned.length >= 11) {
+      cleaned = cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (cleaned.length >= 7) {
+      cleaned = cleaned.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+    } else if (cleaned.length >= 3) {
+      cleaned = cleaned.replace(/(\d{2})(\d+)/, '($1) $2');
+    }
+    return cleaned;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-gray-900 border-blue-500/30 text-white">
         <DialogHeader>
           <DialogTitle className="text-white">Criar Novo Lead</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Preencha as informações obrigatórias do novo lead.
+            Preencha as informações obrigatórias do novo lead. Os dados serão sincronizados automaticamente.
           </DialogDescription>
         </DialogHeader>
         
@@ -165,15 +188,8 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                       {...field}
                       className="bg-black/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                       onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, '');
-                        if (value.length >= 11) {
-                          value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-                        } else if (value.length >= 7) {
-                          value = value.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
-                        } else if (value.length >= 3) {
-                          value = value.replace(/(\d{2})(\d+)/, '($1) $2');
-                        }
-                        field.onChange(value);
+                        const formatted = formatWhatsApp(e.target.value);
+                        field.onChange(formatted);
                       }}
                     />
                   </FormControl>
