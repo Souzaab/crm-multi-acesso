@@ -40,7 +40,14 @@ export const list = api<ListEventosRequest, ListEventosResponse>(
     
     const eventos: Evento[] = [];
     for await (const row of eventosDB.rawQuery<Evento>(query, ...params)) {
-      eventos.push(row);
+      eventos.push({
+        ...row,
+        user_id: row.user_id ?? null,
+        lead_id: row.lead_id ?? null,
+        agendamento_id: row.agendamento_id ?? null,
+        matricula_id: row.matricula_id ?? null,
+        dados_evento: row.dados_evento ?? null,
+      });
     }
     
     return { eventos };

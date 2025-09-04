@@ -15,13 +15,13 @@ export interface CreateEventoRequest {
 export interface Evento {
   id: string;
   tenant_id: string;
-  user_id?: string;
-  lead_id?: string;
-  agendamento_id?: string;
-  matricula_id?: string;
+  user_id: string | null;
+  lead_id: string | null;
+  agendamento_id: string | null;
+  matricula_id: string | null;
   tipo_evento: string;
   descricao: string;
-  dados_evento?: any;
+  dados_evento: any | null;
   created_at: Date;
 }
 
@@ -46,6 +46,13 @@ export const create = api<CreateEventoRequest, Evento>(
       throw new Error("Failed to create evento");
     }
     
-    return row;
+    return {
+      ...row,
+      user_id: row.user_id ?? null,
+      lead_id: row.lead_id ?? null,
+      agendamento_id: row.agendamento_id ?? null,
+      matricula_id: row.matricula_id ?? null,
+      dados_evento: row.dados_evento ?? null,
+    };
   }
 );
