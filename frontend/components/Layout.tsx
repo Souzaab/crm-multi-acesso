@@ -9,6 +9,7 @@ import {
   UserPlus,
   Menu,
   FileText,
+  Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Unidades', href: '/units', icon: Building },
   { name: 'Usuários', href: '/users', icon: UserPlus },
+  { name: 'Diagnósticos', href: '/diagnostics', icon: Activity },
 ];
 
 export default function Layout({ children }: LayoutProps) {

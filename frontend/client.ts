@@ -35,6 +35,7 @@ const BROWSER = typeof globalThis === "object" && ("window" in globalThis);
 export class Client {
     public readonly agendamentos: agendamentos.ServiceClient
     public readonly anotacoes: anotacoes.ServiceClient
+    public readonly diagnostics: diagnostics.ServiceClient
     public readonly eventos: eventos.ServiceClient
     public readonly leads: leads.ServiceClient
     public readonly matriculas: matriculas.ServiceClient
@@ -60,6 +61,7 @@ export class Client {
         const base = new BaseClient(this.target, this.options)
         this.agendamentos = new agendamentos.ServiceClient(base)
         this.anotacoes = new anotacoes.ServiceClient(base)
+        this.diagnostics = new diagnostics.ServiceClient(base)
         this.eventos = new eventos.ServiceClient(base)
         this.leads = new leads.ServiceClient(base)
         this.matriculas = new matriculas.ServiceClient(base)
@@ -187,6 +189,54 @@ export namespace anotacoes {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/anotacoes`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_anotacoes_list_list>
+        }
+    }
+}
+
+/**
+ * Import the endpoint handlers to derive the types for the client.
+ */
+import { testConnectivity as api_diagnostics_connectivity_testConnectivity } from "~backend/diagnostics/connectivity";
+import { testPerformance as api_diagnostics_performance_testPerformance } from "~backend/diagnostics/performance";
+import { testSecurity as api_diagnostics_security_testSecurity } from "~backend/diagnostics/security";
+
+export namespace diagnostics {
+
+    export class ServiceClient {
+        private baseClient: BaseClient
+
+        constructor(baseClient: BaseClient) {
+            this.baseClient = baseClient
+            this.testConnectivity = this.testConnectivity.bind(this)
+            this.testPerformance = this.testPerformance.bind(this)
+            this.testSecurity = this.testSecurity.bind(this)
+        }
+
+        /**
+         * Tests comprehensive connectivity and authentication with Supabase.
+         */
+        public async testConnectivity(): Promise<ResponseType<typeof api_diagnostics_connectivity_testConnectivity>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/diagnostics/connectivity`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_connectivity_testConnectivity>
+        }
+
+        /**
+         * Tests database performance and latency.
+         */
+        public async testPerformance(): Promise<ResponseType<typeof api_diagnostics_performance_testPerformance>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/diagnostics/performance`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_performance_testPerformance>
+        }
+
+        /**
+         * Tests security configuration and policies.
+         */
+        public async testSecurity(): Promise<ResponseType<typeof api_diagnostics_security_testSecurity>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/diagnostics/security`, {method: "GET", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_security_testSecurity>
         }
     }
 }
