@@ -52,10 +52,10 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
       const endDate = req.end_date || now.toISOString();
       
       const baseParams: any[] = [tenantId, startDate, endDate];
-      let whereClause = `WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`;
+      let whereClause = `WHERE l.tenant_id = $1 AND l.created_at BETWEEN $2 AND $3`;
       if (req.unit_id) {
         baseParams.push(req.unit_id);
-        whereClause += ` AND unit_id = $${baseParams.length}`;
+        whereClause += ` AND l.unit_id = $${baseParams.length}`;
       }
 
       log.info("Query parameters for reports", { baseParams, whereClause });
@@ -65,12 +65,12 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
       try {
         for await (const row of reportsDB.rawQuery<{label: string, total: number, value: number}>(
           `SELECT
-              origin_channel as label,
+              l.origin_channel as label,
               COUNT(*)::int as total,
-              SUM(CASE WHEN converted = TRUE THEN 1 ELSE 0 END)::int as value
-          FROM leads
+              SUM(CASE WHEN l.converted = TRUE THEN 1 ELSE 0 END)::int as value
+          FROM leads l
           ${whereClause}
-          GROUP BY origin_channel
+          GROUP BY l.origin_channel
           ORDER BY value DESC`,
           ...baseParams
         )) {
@@ -81,7 +81,7 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
         log.error("Error in conversion by channel query", { error: (error as Error).message });
       }
 
-      // 2. Consultant Ranking
+      // 2. Consultant Ranking - Fixed ambiguous column reference
       const consultantRanking: ReportItem[] = [];
       try {
         for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
@@ -107,11 +107,12 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
       try {
         for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
           `SELECT
-              disciplina as label,
+              m.disciplina as label,
               COUNT(*)::int as value
-          FROM matriculas
-          ${whereClause.replace('created_at', 'm.created_at')}
-          GROUP BY disciplina
+          FROM matriculas m
+          WHERE m.tenant_id = $1 AND m.created_at BETWEEN $2 AND $3
+          ${req.unit_id ? ` AND m.unit_id = $4` : ''}
+          GROUP BY m.disciplina
           ORDER BY value DESC`,
           ...baseParams
         )) {
@@ -125,11 +126,11 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
         try {
           for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
             `SELECT
-                discipline as label,
+                l.discipline as label,
                 COUNT(*)::int as value
-            FROM leads
-            ${whereClause} AND converted = TRUE
-            GROUP BY discipline
+            FROM leads l
+            ${whereClause} AND l.converted = TRUE
+            GROUP BY l.discipline
             ORDER BY value DESC`,
             ...baseParams
           )) {
@@ -149,7 +150,8 @@ export const getReports = api<GetReportsRequest, GetReportsResponse>(
               AVG(EXTRACT(EPOCH FROM (m.created_at - l.created_at)) / 86400)::int as avg_duration_days
           FROM matriculas m
           JOIN leads l ON m.lead_id = l.id
-          ${whereClause.replace('created_at', 'm.created_at')}`,
+          WHERE m.tenant_id = $1 AND m.created_at BETWEEN $2 AND $3
+          ${req.unit_id ? ` AND m.unit_id = $4` : ''}`,
           ...baseParams
         );
 
