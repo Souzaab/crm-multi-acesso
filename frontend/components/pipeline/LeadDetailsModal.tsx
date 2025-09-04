@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { 
-  User, Phone, Mail, Calendar, BarChart, Tag, CheckCircle, XCircle, MessageSquare, History, Send
+  User, Phone, Calendar, BarChart, Tag, CheckCircle, XCircle, MessageSquare, History, Send
 } from 'lucide-react';
 import type { Lead } from '~backend/leads/create';
 import type { Anotacao } from '~backend/anotacoes/create';
@@ -88,17 +88,17 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col bg-gray-900 border-blue-500/30 text-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{lead.name}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl text-white">{lead.name}</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Detalhes completos, anotações e histórico do lead.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex-grow overflow-y-auto pr-2">
           <Tabs defaultValue="details">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800">
               <TabsTrigger value="details">Detalhes</TabsTrigger>
               <TabsTrigger value="history">Anotações e Histórico</TabsTrigger>
             </TabsList>
@@ -112,7 +112,7 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
                 <InfoItem icon={BarChart} label="Status" value={<Badge>{statusLabels[lead.status]}</Badge>} />
                 <InfoItem icon={Tag} label="Interesse" value={<Badge variant="secondary">{interestLabels[lead.interest_level]}</Badge>} />
                 <InfoItem icon={Calendar} label="Data de Criação" value={new Date(lead.created_at).toLocaleString('pt-BR')} />
-                <InfoItem icon={lead.attended ? CheckCircle : XCircle} label="Compareceu" value={lead.attended ? 'Sim' : 'Não'} color={lead.attended ? 'text-green-600' : 'text-red-600'} />
+                <InfoItem icon={lead.attended ? CheckCircle : XCircle} label="Compareceu" value={lead.attended ? 'Sim' : 'Não'} color={lead.attended ? 'text-green-400' : 'text-red-400'} />
               </div>
             </TabsContent>
 
@@ -123,9 +123,13 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
                     placeholder="Adicionar uma nova anotação..."
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    className="min-h-24"
+                    className="min-h-24 bg-black/50 border-blue-500/30 text-white placeholder-gray-400 focus:border-blue-500"
                   />
-                  <Button onClick={handleAddNote} disabled={addNoteMutation.isPending || !newNote.trim()}>
+                  <Button 
+                    onClick={handleAddNote} 
+                    disabled={addNoteMutation.isPending || !newNote.trim()}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                  >
                     <Send className="h-4 w-4 mr-2" />
                     {addNoteMutation.isPending ? 'Salvando...' : 'Salvar Anotação'}
                   </Button>
@@ -135,15 +139,15 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
                   {timelineItems.map((item, index) => (
                     <div key={index} className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.itemType === 'note' ? 'bg-yellow-100' : 'bg-blue-100'}`}>
-                          {item.itemType === 'note' ? <MessageSquare className="h-4 w-4 text-yellow-600" /> : <History className="h-4 w-4 text-blue-600" />}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.itemType === 'note' ? 'bg-yellow-900/50' : 'bg-blue-900/50'}`}>
+                          {item.itemType === 'note' ? <MessageSquare className="h-4 w-4 text-yellow-300" /> : <History className="h-4 w-4 text-blue-300" />}
                         </div>
-                        {index < timelineItems.length - 1 && <div className="w-px h-full bg-gray-200" />}
+                        {index < timelineItems.length - 1 && <div className="w-px h-full bg-gray-700" />}
                       </div>
                       <div className="flex-1 pb-6">
-                        <p className="text-xs text-gray-500">{item.date.toLocaleString('pt-BR')}</p>
-                        <div className={`p-3 rounded-lg ${item.itemType === 'note' ? 'bg-yellow-50' : 'bg-blue-50'}`}>
-                          <p className="text-sm text-gray-800">
+                        <p className="text-xs text-gray-400">{item.date.toLocaleString('pt-BR')}</p>
+                        <div className={`p-3 rounded-lg ${item.itemType === 'note' ? 'bg-gray-800/50' : 'bg-blue-950/50'}`}>
+                          <p className="text-sm text-gray-300">
                             {item.itemType === 'note' ? (item as Anotacao).conteudo : (item as Evento).descricao}
                           </p>
                         </div>
@@ -161,11 +165,11 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
 }
 
 const InfoItem = ({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: React.ReactNode, color?: string }) => (
-  <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-    <Icon className={`h-5 w-5 mt-1 ${color || 'text-gray-500'}`} />
+  <div className="flex items-start gap-3 p-3 bg-black/50 border border-blue-500/20 rounded-lg">
+    <Icon className={`h-5 w-5 mt-1 flex-shrink-0 ${color || 'text-blue-400'}`} />
     <div>
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`font-medium text-gray-800 ${color}`}>{value}</p>
+      <p className="text-xs text-gray-400">{label}</p>
+      <div className={`font-medium text-white ${color}`}>{value}</div>
     </div>
   </div>
 );

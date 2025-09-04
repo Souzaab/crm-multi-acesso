@@ -15,7 +15,7 @@ interface PipelineColumnProps {
 
 export default function PipelineColumn({ column, leads, onCardClick }: PipelineColumnProps) {
   return (
-    <div className="min-w-[320px] w-[320px] flex-shrink-0 bg-gray-900/50 rounded-xl flex flex-col">
+    <div className="min-w-[320px] w-[320px] flex-shrink-0 bg-black/30 border border-blue-500/20 backdrop-blur-sm rounded-xl flex flex-col">
       <div className="p-4 bg-gradient-to-b from-blue-600/50 to-blue-800/50 rounded-t-xl flex justify-between items-center shadow-inner-top">
         <h3 className="font-semibold text-white">{column.title}</h3>
         <Badge variant="secondary" className="bg-black/20 text-white">{leads.length}</Badge>

@@ -60,8 +60,8 @@ export default function PipelineCard({ lead, index, onCardClick }: PipelineCardP
           <Card
             onClick={() => onCardClick(lead)}
             className={cn(
-              'bg-gray-900 border border-gray-800 text-gray-300 hover:border-blue-700 cursor-pointer transition-all duration-200',
-              snapshot.isDragging && 'shadow-2xl shadow-blue-900/50 scale-105'
+              'bg-gray-900 border border-blue-500/20 text-gray-300 hover:border-blue-500/50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-blue-900/20',
+              snapshot.isDragging && 'shadow-2xl shadow-blue-900/50 scale-105 border-blue-500/80'
             )}
           >
             <CardContent className="p-3 space-y-3">
