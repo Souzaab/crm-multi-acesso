@@ -95,10 +95,10 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-gray-900 border-blue-500/30 text-white">
         <DialogHeader>
-          <DialogTitle>Criar Novo Lead</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Criar Novo Lead</DialogTitle>
+          <DialogDescription className="text-gray-400">
             Preencha as informações obrigatórias do novo lead.
           </DialogDescription>
         </DialogHeader>
@@ -114,9 +114,13 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome *</FormLabel>
+                  <FormLabel className="text-gray-300">Nome *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome completo do lead" {...field} />
+                    <Input 
+                      placeholder="Nome completo do lead" 
+                      {...field} 
+                      className="bg-black/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,11 +139,12 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>WhatsApp *</FormLabel>
+                  <FormLabel className="text-gray-300">WhatsApp *</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="(11) 99999-9999" 
                       {...field}
+                      className="bg-black/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, '');
                         if (value.length >= 11) {
@@ -164,23 +169,23 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               rules={{ required: 'Disciplina é obrigatória' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Disciplina *</FormLabel>
+                  <FormLabel className="text-gray-300">Disciplina *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                         <SelectValue placeholder="Selecione a disciplina" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Natação">Natação</SelectItem>
-                      <SelectItem value="Musculação">Musculação</SelectItem>
-                      <SelectItem value="Pilates">Pilates</SelectItem>
-                      <SelectItem value="Yoga">Yoga</SelectItem>
-                      <SelectItem value="CrossFit">CrossFit</SelectItem>
-                      <SelectItem value="Dança">Dança</SelectItem>
-                      <SelectItem value="Funcional">Funcional</SelectItem>
-                      <SelectItem value="Lutas">Lutas</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="Natação" className="text-white hover:bg-gray-800">Natação</SelectItem>
+                      <SelectItem value="Musculação" className="text-white hover:bg-gray-800">Musculação</SelectItem>
+                      <SelectItem value="Pilates" className="text-white hover:bg-gray-800">Pilates</SelectItem>
+                      <SelectItem value="Yoga" className="text-white hover:bg-gray-800">Yoga</SelectItem>
+                      <SelectItem value="CrossFit" className="text-white hover:bg-gray-800">CrossFit</SelectItem>
+                      <SelectItem value="Dança" className="text-white hover:bg-gray-800">Dança</SelectItem>
+                      <SelectItem value="Funcional" className="text-white hover:bg-gray-800">Funcional</SelectItem>
+                      <SelectItem value="Lutas" className="text-white hover:bg-gray-800">Lutas</SelectItem>
+                      <SelectItem value="Outros" className="text-white hover:bg-gray-800">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -194,18 +199,18 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               rules={{ required: 'Faixa etária é obrigatória' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Faixa Etária *</FormLabel>
+                  <FormLabel className="text-gray-300">Faixa Etária *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                         <SelectValue placeholder="Selecione a faixa etária" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Infantil (0-12 anos)">Infantil (0-12 anos)</SelectItem>
-                      <SelectItem value="Adolescente (13-17 anos)">Adolescente (13-17 anos)</SelectItem>
-                      <SelectItem value="Adulto (18-59 anos)">Adulto (18-59 anos)</SelectItem>
-                      <SelectItem value="Idoso (60+ anos)">Idoso (60+ anos)</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="Infantil (0-12 anos)" className="text-white hover:bg-gray-800">Infantil (0-12 anos)</SelectItem>
+                      <SelectItem value="Adolescente (13-17 anos)" className="text-white hover:bg-gray-800">Adolescente (13-17 anos)</SelectItem>
+                      <SelectItem value="Adulto (18-59 anos)" className="text-white hover:bg-gray-800">Adulto (18-59 anos)</SelectItem>
+                      <SelectItem value="Idoso (60+ anos)" className="text-white hover:bg-gray-800">Idoso (60+ anos)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -219,19 +224,19 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               rules={{ required: 'Quem procurou é obrigatório' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quem Procurou *</FormLabel>
+                  <FormLabel className="text-gray-300">Quem Procurou *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                         <SelectValue placeholder="Quem fez o contato" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Própria pessoa">Própria pessoa</SelectItem>
-                      <SelectItem value="Responsável">Responsável</SelectItem>
-                      <SelectItem value="Familiar">Familiar</SelectItem>
-                      <SelectItem value="Amigo">Amigo</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="Própria pessoa" className="text-white hover:bg-gray-800">Própria pessoa</SelectItem>
+                      <SelectItem value="Responsável" className="text-white hover:bg-gray-800">Responsável</SelectItem>
+                      <SelectItem value="Familiar" className="text-white hover:bg-gray-800">Familiar</SelectItem>
+                      <SelectItem value="Amigo" className="text-white hover:bg-gray-800">Amigo</SelectItem>
+                      <SelectItem value="Outros" className="text-white hover:bg-gray-800">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -245,22 +250,22 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               rules={{ required: 'Canal de origem é obrigatório' }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Canal de Origem *</FormLabel>
+                  <FormLabel className="text-gray-300">Canal de Origem *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                         <SelectValue placeholder="Como nos conheceu" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                      <SelectItem value="Instagram">Instagram</SelectItem>
-                      <SelectItem value="Facebook">Facebook</SelectItem>
-                      <SelectItem value="Google">Google</SelectItem>
-                      <SelectItem value="Site">Site</SelectItem>
-                      <SelectItem value="Indicação">Indicação</SelectItem>
-                      <SelectItem value="Passando na rua">Passando na rua</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="WhatsApp" className="text-white hover:bg-gray-800">WhatsApp</SelectItem>
+                      <SelectItem value="Instagram" className="text-white hover:bg-gray-800">Instagram</SelectItem>
+                      <SelectItem value="Facebook" className="text-white hover:bg-gray-800">Facebook</SelectItem>
+                      <SelectItem value="Google" className="text-white hover:bg-gray-800">Google</SelectItem>
+                      <SelectItem value="Site" className="text-white hover:bg-gray-800">Site</SelectItem>
+                      <SelectItem value="Indicação" className="text-white hover:bg-gray-800">Indicação</SelectItem>
+                      <SelectItem value="Passando na rua" className="text-white hover:bg-gray-800">Passando na rua</SelectItem>
+                      <SelectItem value="Outros" className="text-white hover:bg-gray-800">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -273,17 +278,17 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               name="interest_level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nível de Interesse</FormLabel>
+                  <FormLabel className="text-gray-300">Nível de Interesse</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="frio">🟦 Frio - Apenas pesquisando</SelectItem>
-                      <SelectItem value="morno">🟨 Morno - Interessado</SelectItem>
-                      <SelectItem value="quente">🟥 Quente - Muito interessado</SelectItem>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="frio" className="text-white hover:bg-gray-800">🟦 Frio - Apenas pesquisando</SelectItem>
+                      <SelectItem value="morno" className="text-white hover:bg-gray-800">🟨 Morno - Interessado</SelectItem>
+                      <SelectItem value="quente" className="text-white hover:bg-gray-800">🟥 Quente - Muito interessado</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -297,16 +302,16 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                 name="unit_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Unidade</FormLabel>
+                    <FormLabel className="text-gray-300">Unidade</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-black/50 border-gray-700 text-white">
                           <SelectValue placeholder="Selecione a unidade (opcional)" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-900 border-gray-700">
                         {units.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
+                          <SelectItem key={unit.id} value={unit.id} className="text-white hover:bg-gray-800">
                             {unit.name}
                           </SelectItem>
                         ))}
@@ -323,11 +328,11 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
               name="observations"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações</FormLabel>
+                  <FormLabel className="text-gray-300">Observações</FormLabel>
                   <FormControl>
                     <Textarea 
                       placeholder="Informações adicionais sobre o lead..."
-                      className="min-h-[80px]"
+                      className="min-h-[80px] bg-black/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                       {...field} 
                     />
                   </FormControl>
@@ -342,10 +347,15 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={createLeadMutation.isPending}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createLeadMutation.isPending}>
+              <Button 
+                type="submit" 
+                disabled={createLeadMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
                 {createLeadMutation.isPending ? 'Criando...' : 'Criar Lead'}
               </Button>
             </div>

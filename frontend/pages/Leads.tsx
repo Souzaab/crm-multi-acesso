@@ -98,73 +98,84 @@ export default function Leads() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-foreground">Leads</h1>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-destructive">Erro ao carregar leads. Tente novamente.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-black text-white p-4 lg:p-6">
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-white">Leads</h1>
+          <Card className="bg-black border-red-500/30 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <p className="text-red-400">Erro ao carregar leads. Tente novamente.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Gerenciamento de Leads</h1>
-          <p className="text-muted-foreground">
-            Filtre, ordene e exporte seus leads com facilidade.
-          </p>
+    <div className="min-h-screen bg-black text-white p-4 lg:p-6">
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Gerenciamento de Leads</h1>
+            <p className="text-gray-400">
+              Filtre, ordene e exporte seus leads com facilidade.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleExport} 
+              variant="outline"
+              className="bg-gradient-to-r from-blue-600/80 to-blue-700/80 hover:from-blue-700/90 hover:to-blue-800/90 border-blue-500/30 text-white shadow-lg backdrop-blur-sm transition-all duration-200"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+            <Button 
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-blue-500/50 transition-all duration-200 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Lead
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Lead
-          </Button>
-        </div>
+
+        <Card className="bg-black border-blue-500/30 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Filtros Avançados</CardTitle>
+            <CardDescription className="text-gray-400">
+              Refine sua busca para encontrar os leads que você precisa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LeadFilters filters={filters} onFiltersChange={setFilters} />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-black border-blue-500/30 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Lista de Leads</CardTitle>
+            <CardDescription className="text-gray-400">
+              Total de leads encontrados: {leadsData?.leads?.length || 0}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LeadsTable
+              leads={leadsData?.leads || []}
+              isLoading={isLoading}
+              sort={sort}
+              onSortChange={handleSortChange}
+            />
+          </CardContent>
+        </Card>
+
+        <CreateLeadDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          units={unitsData?.units || []}
+          selectedTenantId={selectedTenantId}
+        />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros Avançados</CardTitle>
-          <CardDescription>
-            Refine sua busca para encontrar os leads que você precisa.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LeadFilters filters={filters} onFiltersChange={setFilters} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Leads</CardTitle>
-          <CardDescription>
-            Total de leads encontrados: {leadsData?.leads?.length || 0}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LeadsTable
-            leads={leadsData?.leads || []}
-            isLoading={isLoading}
-            sort={sort}
-            onSortChange={handleSortChange}
-          />
-        </CardContent>
-      </Card>
-
-      <CreateLeadDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        units={unitsData?.units || []}
-        selectedTenantId={selectedTenantId}
-      />
     </div>
   );
 }

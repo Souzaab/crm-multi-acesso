@@ -51,24 +51,24 @@ export default function LeadFilters({ filters, onFiltersChange }: LeadFiltersPro
   const isFiltered = Object.values(filters).some(value => !!value);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-50 border rounded-lg">
+    <div className="flex flex-wrap items-center gap-4 p-4 bg-gray-900/50 border border-blue-500/20 rounded-lg backdrop-blur-sm">
       <div className="relative flex-1 min-w-48">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
           placeholder="Buscar por nome ou telefone..."
           value={filters.search}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-          className="pl-10"
+          className="pl-10 bg-black/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
         />
       </div>
 
       <Select value={filters.status} onValueChange={(value) => onFiltersChange({ ...filters, status: value })}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48 bg-black/50 border-gray-700 text-white">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-gray-900 border-gray-700">
           {statusOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-800">
               {option.label}
             </SelectItem>
           ))}
@@ -76,12 +76,12 @@ export default function LeadFilters({ filters, onFiltersChange }: LeadFiltersPro
       </Select>
 
       <Select value={filters.channel} onValueChange={(value) => onFiltersChange({ ...filters, channel: value })}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48 bg-black/50 border-gray-700 text-white">
           <SelectValue placeholder="Filtrar por canal" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-gray-900 border-gray-700">
           {channelOptions.map((option) => (
-            <SelectItem key={option} value={option}>
+            <SelectItem key={option} value={option} className="text-white hover:bg-gray-800">
               {option}
             </SelectItem>
           ))}
@@ -89,12 +89,12 @@ export default function LeadFilters({ filters, onFiltersChange }: LeadFiltersPro
       </Select>
 
       <Select value={filters.discipline} onValueChange={(value) => onFiltersChange({ ...filters, discipline: value })}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48 bg-black/50 border-gray-700 text-white">
           <SelectValue placeholder="Filtrar por disciplina" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-gray-900 border-gray-700">
           {disciplineOptions.map((option) => (
-            <SelectItem key={option} value={option}>
+            <SelectItem key={option} value={option} className="text-white hover:bg-gray-800">
               {option}
             </SelectItem>
           ))}
@@ -107,7 +107,11 @@ export default function LeadFilters({ filters, onFiltersChange }: LeadFiltersPro
       />
 
       {isFiltered && (
-        <Button variant="ghost" onClick={handleReset}>
+        <Button 
+          variant="ghost" 
+          onClick={handleReset}
+          className="text-gray-400 hover:text-white hover:bg-gray-800/50"
+        >
           <X className="h-4 w-4 mr-2" />
           Limpar Filtros
         </Button>
