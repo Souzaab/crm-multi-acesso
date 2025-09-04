@@ -122,28 +122,96 @@ CREATE TABLE IF NOT EXISTS lead_interactions (
 );
 
 -- Add foreign key constraints
-ALTER TABLE users ADD CONSTRAINT fk_users_unit_id FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL;
-ALTER TABLE users ADD CONSTRAINT fk_users_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE SET NULL;
-ALTER TABLE leads ADD CONSTRAINT fk_leads_unit_id FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL;
-ALTER TABLE leads ADD CONSTRAINT fk_leads_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE leads ADD CONSTRAINT fk_leads_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE SET NULL;
-ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
-ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
-ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
-ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
-ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
-ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
-ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_agendamento_id FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE SET NULL;
-ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_matricula_id FOREIGN KEY (matricula_id) REFERENCES matriculas(id) ON DELETE SET NULL;
-ALTER TABLE eventos ADD CONSTRAINT fk_eventos_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
-ALTER TABLE eventos ADD CONSTRAINT fk_eventos_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE eventos ADD CONSTRAINT fk_eventos_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
-ALTER TABLE eventos ADD CONSTRAINT fk_eventos_agendamento_id FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE SET NULL;
-ALTER TABLE eventos ADD CONSTRAINT fk_eventos_matricula_id FOREIGN KEY (matricula_id) REFERENCES matriculas(id) ON DELETE SET NULL;
-ALTER TABLE lead_interactions ADD CONSTRAINT fk_lead_interactions_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_users_unit_id') THEN
+    ALTER TABLE users ADD CONSTRAINT fk_users_unit_id FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_users_tenant_id') THEN
+    ALTER TABLE users ADD CONSTRAINT fk_users_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_leads_unit_id') THEN
+    ALTER TABLE leads ADD CONSTRAINT fk_leads_unit_id FOREIGN KEY (unit_id) REFERENCES units(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_leads_user_id') THEN
+    ALTER TABLE leads ADD CONSTRAINT fk_leads_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_leads_tenant_id') THEN
+    ALTER TABLE leads ADD CONSTRAINT fk_leads_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_agendamentos_tenant_id') THEN
+    ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_agendamentos_lead_id') THEN
+    ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_agendamentos_user_id') THEN
+    ALTER TABLE agendamentos ADD CONSTRAINT fk_agendamentos_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_matriculas_tenant_id') THEN
+    ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_matriculas_lead_id') THEN
+    ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_matriculas_user_id') THEN
+    ALTER TABLE matriculas ADD CONSTRAINT fk_matriculas_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_anotacoes_tenant_id') THEN
+    ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_anotacoes_lead_id') THEN
+    ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_anotacoes_user_id') THEN
+    ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_anotacoes_agendamento_id') THEN
+    ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_agendamento_id FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_anotacoes_matricula_id') THEN
+    ALTER TABLE anotacoes ADD CONSTRAINT fk_anotacoes_matricula_id FOREIGN KEY (matricula_id) REFERENCES matriculas(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_eventos_tenant_id') THEN
+    ALTER TABLE eventos ADD CONSTRAINT fk_eventos_tenant_id FOREIGN KEY (tenant_id) REFERENCES units(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_eventos_user_id') THEN
+    ALTER TABLE eventos ADD CONSTRAINT fk_eventos_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_eventos_lead_id') THEN
+    ALTER TABLE eventos ADD CONSTRAINT fk_eventos_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_eventos_agendamento_id') THEN
+    ALTER TABLE eventos ADD CONSTRAINT fk_eventos_agendamento_id FOREIGN KEY (agendamento_id) REFERENCES agendamentos(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_eventos_matricula_id') THEN
+    ALTER TABLE eventos ADD CONSTRAINT fk_eventos_matricula_id FOREIGN KEY (matricula_id) REFERENCES matriculas(id) ON DELETE SET NULL;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_lead_interactions_lead_id') THEN
+    ALTER TABLE lead_interactions ADD CONSTRAINT fk_lead_interactions_lead_id FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);

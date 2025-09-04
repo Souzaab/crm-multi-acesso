@@ -1,5 +1,3 @@
 import { SQLDatabase } from "encore.dev/storage/sqldb";
 
-export const unitsDB = new SQLDatabase("supabase_crm", {
-  migrations: "./migrations",
-});
+export const unitsDB = SQLDatabase.named("supabase_crm");
