@@ -33,26 +33,26 @@ export function DateRangePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              "w-[300px] justify-start text-left font-normal bg-black/50 border-gray-700 text-white hover:bg-gray-800",
+              !date && "text-gray-400"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y", { locale: ptBR })} -{" "}
-                  {format(date.to, "LLL dd, y", { locale: ptBR })}
+                  {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                  {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
                 </>
               ) : (
-                format(date.from, "LLL dd, y", { locale: ptBR })
+                format(date.from, "dd/MM/yyyy", { locale: ptBR })
               )
             ) : (
               <span>Selecione um período</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 bg-gray-900 border-gray-700" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -61,6 +61,7 @@ export function DateRangePicker({
             onSelect={onDateChange}
             numberOfMonths={2}
             locale={ptBR}
+            className="bg-gray-900 text-white"
           />
         </PopoverContent>
       </Popover>

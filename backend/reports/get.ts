@@ -3,6 +3,7 @@ import { Query } from "encore.dev/api";
 import { reportsDB } from "./db";
 import { getAuthData } from "~encore/auth";
 import { APIError } from "encore.dev/api";
+import log from "encore.dev/log";
 
 export interface GetReportsRequest {
   unit_id?: Query<string>;
@@ -34,100 +35,168 @@ export interface GetReportsResponse {
 export const getReports = api<GetReportsRequest, GetReportsResponse>(
   { expose: true, auth: true, method: "GET", path: "/reports" },
   async (req) => {
-    const auth = getAuthData()!;
-    let tenantId = auth.tenant_id;
+    try {
+      log.info("Reports request received", { req });
+      
+      const auth = getAuthData()!;
+      let tenantId = auth.tenant_id;
 
-    if (auth.is_master && req.tenant_id) {
-      tenantId = req.tenant_id;
-    } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
-      throw APIError.permissionDenied("You can only access your own tenant's data.");
-    }
+      if (auth.is_master && req.tenant_id) {
+        tenantId = req.tenant_id;
+      } else if (req.tenant_id && !auth.is_master && req.tenant_id !== auth.tenant_id) {
+        throw APIError.permissionDenied("You can only access your own tenant's data.");
+      }
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    
-    const startDate = req.start_date || startOfMonth.toISOString();
-    const endDate = req.end_date || now.toISOString();
-    
-    const baseParams: any[] = [tenantId, startDate, endDate];
-    let whereClause = `WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`;
-    if (req.unit_id) {
-      baseParams.push(req.unit_id);
-      whereClause += ` AND unit_id = $${baseParams.length}`;
-    }
+      if (!tenantId) {
+        throw APIError.invalidArgument("tenant_id is required.");
+      }
 
-    // 1. Conversion Rate by Channel
-    const conversionByChannel: ReportItem[] = [];
-    for await (const row of reportsDB.rawQuery<{label: string, total: number, value: number}>(
-      `SELECT
-          origin_channel as label,
-          COUNT(*) as total,
-          SUM(CASE WHEN converted = TRUE THEN 1 ELSE 0 END)::int as value
-      FROM leads
-      ${whereClause}
-      GROUP BY origin_channel
-      ORDER BY value DESC`,
-      ...baseParams
-    )) {
-      conversionByChannel.push(row);
-    }
+      log.info("Using tenant ID for reports", { tenantId });
 
-    // 2. Consultant Ranking
-    const consultantRanking: ReportItem[] = [];
-    for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
-      `SELECT
-          u.name as label,
-          COUNT(l.id)::int as value
-      FROM leads l
-      JOIN users u ON l.user_id = u.id
-      ${whereClause} AND l.converted = TRUE
-      GROUP BY u.name
-      ORDER BY value DESC`,
-      ...baseParams
-    )) {
-      consultantRanking.push(row);
-    }
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      const startDate = req.start_date || startOfMonth.toISOString();
+      const endDate = req.end_date || now.toISOString();
+      
+      const baseParams: any[] = [tenantId, startDate, endDate];
+      let whereClause = `WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`;
+      if (req.unit_id) {
+        baseParams.push(req.unit_id);
+        whereClause += ` AND unit_id = $${baseParams.length}`;
+      }
 
-    // 3. Enrollments by Discipline
-    const enrollmentsByDiscipline: ReportItem[] = [];
-    for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
-      `SELECT
-          discipline as label,
-          COUNT(*)::int as value
-      FROM matriculas
-      ${whereClause}
-      GROUP BY discipline
-      ORDER BY value DESC`,
-      ...baseParams
-    )) {
-      enrollmentsByDiscipline.push(row);
-    }
+      log.info("Query parameters for reports", { baseParams, whereClause });
 
-    // 4. Average Funnel Time
-    const funnelTimeResult = await reportsDB.rawQueryRow<{ avg_duration: any }>(
-      `SELECT
-          AVG(m.created_at - l.created_at) as avg_duration
-      FROM matriculas m
-      JOIN leads l ON m.lead_id = l.id
-      ${whereClause.replace('created_at', 'm.created_at')}`, // Use matricula creation date for filter
-      ...baseParams
-    );
+      // 1. Conversion Rate by Channel
+      const conversionByChannel: ReportItem[] = [];
+      try {
+        for await (const row of reportsDB.rawQuery<{label: string, total: number, value: number}>(
+          `SELECT
+              origin_channel as label,
+              COUNT(*)::int as total,
+              SUM(CASE WHEN converted = TRUE THEN 1 ELSE 0 END)::int as value
+          FROM leads
+          ${whereClause}
+          GROUP BY origin_channel
+          ORDER BY value DESC`,
+          ...baseParams
+        )) {
+          conversionByChannel.push(row);
+        }
+        log.info("Conversion by channel results", { count: conversionByChannel.length });
+      } catch (error) {
+        log.error("Error in conversion by channel query", { error: (error as Error).message });
+      }
 
-    let averageFunnelTime: FunnelTime | null = null;
-    if (funnelTimeResult?.avg_duration) {
-      const { days, hours, minutes } = funnelTimeResult.avg_duration;
-      averageFunnelTime = {
-        days: days || 0,
-        hours: hours || 0,
-        minutes: minutes || 0,
+      // 2. Consultant Ranking
+      const consultantRanking: ReportItem[] = [];
+      try {
+        for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
+          `SELECT
+              COALESCE(u.name, 'Sem consultor') as label,
+              COUNT(l.id)::int as value
+          FROM leads l
+          LEFT JOIN users u ON l.user_id = u.id
+          ${whereClause} AND l.converted = TRUE
+          GROUP BY u.name
+          ORDER BY value DESC`,
+          ...baseParams
+        )) {
+          consultantRanking.push(row);
+        }
+        log.info("Consultant ranking results", { count: consultantRanking.length });
+      } catch (error) {
+        log.error("Error in consultant ranking query", { error: (error as Error).message });
+      }
+
+      // 3. Enrollments by Discipline
+      const enrollmentsByDiscipline: ReportItem[] = [];
+      try {
+        for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
+          `SELECT
+              disciplina as label,
+              COUNT(*)::int as value
+          FROM matriculas
+          ${whereClause.replace('created_at', 'm.created_at')}
+          GROUP BY disciplina
+          ORDER BY value DESC`,
+          ...baseParams
+        )) {
+          enrollmentsByDiscipline.push(row);
+        }
+        log.info("Enrollments by discipline results", { count: enrollmentsByDiscipline.length });
+      } catch (error) {
+        log.error("Error in enrollments by discipline query", { error: (error as Error).message });
+        
+        // Fallback: try to get from leads table
+        try {
+          for await (const row of reportsDB.rawQuery<{label: string, value: number}>(
+            `SELECT
+                discipline as label,
+                COUNT(*)::int as value
+            FROM leads
+            ${whereClause} AND converted = TRUE
+            GROUP BY discipline
+            ORDER BY value DESC`,
+            ...baseParams
+          )) {
+            enrollmentsByDiscipline.push(row);
+          }
+          log.info("Enrollments by discipline fallback results", { count: enrollmentsByDiscipline.length });
+        } catch (fallbackError) {
+          log.error("Error in enrollments fallback query", { error: (fallbackError as Error).message });
+        }
+      }
+
+      // 4. Average Funnel Time
+      let averageFunnelTime: FunnelTime | null = null;
+      try {
+        const funnelTimeResult = await reportsDB.rawQueryRow<{ avg_duration_days: number }>(
+          `SELECT
+              AVG(EXTRACT(EPOCH FROM (m.created_at - l.created_at)) / 86400)::int as avg_duration_days
+          FROM matriculas m
+          JOIN leads l ON m.lead_id = l.id
+          ${whereClause.replace('created_at', 'm.created_at')}`,
+          ...baseParams
+        );
+
+        if (funnelTimeResult?.avg_duration_days && funnelTimeResult.avg_duration_days > 0) {
+          const totalDays = funnelTimeResult.avg_duration_days;
+          const days = Math.floor(totalDays);
+          const hours = Math.floor((totalDays - days) * 24);
+          const minutes = Math.floor(((totalDays - days) * 24 - hours) * 60);
+          
+          averageFunnelTime = { days, hours, minutes };
+        }
+        log.info("Average funnel time result", { averageFunnelTime });
+      } catch (error) {
+        log.error("Error in average funnel time query", { error: (error as Error).message });
+      }
+
+      const result = {
+        conversionByChannel,
+        consultantRanking,
+        enrollmentsByDiscipline,
+        averageFunnelTime,
       };
-    }
 
-    return {
-      conversionByChannel,
-      consultantRanking,
-      enrollmentsByDiscipline,
-      averageFunnelTime,
-    };
+      log.info("Reports result", { result });
+      return result;
+      
+    } catch (error) {
+      log.error("Reports endpoint error", { 
+        error: (error as Error).message, 
+        stack: (error as Error).stack 
+      });
+      
+      if (error instanceof APIError) {
+        throw error;
+      }
+      
+      throw APIError.internal("Failed to fetch reports data", { 
+        detail: (error as Error).message 
+      });
+    }
   }
 );
