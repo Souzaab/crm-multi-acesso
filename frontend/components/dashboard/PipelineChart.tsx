@@ -17,21 +17,10 @@ const statusLabels: Record<string, string> = {
   em_espera: 'Em Espera',
 };
 
-const statusColors: Record<string, string> = {
-  novo_lead: '#3b82f6',
-  agendado: '#f59e0b',
-  follow_up_1: '#f97316',
-  follow_up_2: '#ef4444',
-  follow_up_3: '#8b5cf6',
-  matriculado: '#10b981',
-  em_espera: '#6b7280',
-};
-
 export default function PipelineChart({ data }: PipelineChartProps) {
   const chartData = data.map(item => ({
     status: statusLabels[item.status] || item.status,
     count: item.count,
-    color: statusColors[item.status] || '#6b7280',
   }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -50,10 +39,10 @@ export default function PipelineChart({ data }: PipelineChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-emerald-900/30 border-emerald-500/30 backdrop-blur-sm h-full">
+      <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-gray-100 text-sm">Pipeline de Vendas</CardTitle>
-          <CardDescription className="text-emerald-200 text-xs">
+          <CardDescription className="text-gray-400 text-xs">
             Distribuição de leads por status
           </CardDescription>
         </CardHeader>
@@ -67,10 +56,10 @@ export default function PipelineChart({ data }: PipelineChartProps) {
   }
 
   return (
-    <Card className="bg-emerald-900/30 border-emerald-500/30 backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-gray-100 text-sm">Pipeline de Vendas</CardTitle>
-        <CardDescription className="text-emerald-200 text-xs">
+        <CardDescription className="text-gray-400 text-xs">
           Distribuição por etapa do funil
         </CardDescription>
       </CardHeader>
@@ -93,7 +82,7 @@ export default function PipelineChart({ data }: PipelineChartProps) {
             <Tooltip content={<CustomTooltip />} />
             <Bar 
               dataKey="count" 
-              fill="#10b981"
+              fill="#3b82f6"
               radius={[2, 2, 0, 0]}
             />
           </BarChart>

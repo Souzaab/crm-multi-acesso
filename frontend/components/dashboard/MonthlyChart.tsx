@@ -35,7 +35,7 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm h-full">
+      <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-gray-100 text-sm">Evolução Mensal</CardTitle>
           <CardDescription className="text-gray-400 text-xs">
@@ -52,7 +52,7 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
   }
 
   return (
-    <Card className="bg-slate-900/50 border-gray-700 backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-gray-100 text-sm">Evolução Mensal</CardTitle>
         <CardDescription className="text-gray-400 text-xs">

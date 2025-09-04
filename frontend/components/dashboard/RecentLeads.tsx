@@ -36,13 +36,13 @@ export default function RecentLeads({ leads }: RecentLeadsProps) {
   };
 
   return (
-    <Card className="bg-rose-900/30 border-rose-500/30 backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-gray-100 flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-rose-400" />
+          <Clock className="h-4 w-4 text-blue-400" />
           Leads Recentes
         </CardTitle>
-        <CardDescription className="text-rose-200 text-xs">
+        <CardDescription className="text-gray-400 text-xs">
           Últimos leads cadastrados
         </CardDescription>
       </CardHeader>
@@ -58,7 +58,7 @@ export default function RecentLeads({ leads }: RecentLeadsProps) {
             leads.slice(0, 5).map((lead) => (
               <div 
                 key={lead.id} 
-                className="flex items-center justify-between p-2 bg-white/5 border border-gray-700 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                className="flex items-center justify-between p-2 bg-gray-900/50 border border-gray-700 rounded-lg hover:bg-gray-800/50 transition-colors duration-200"
               >
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-gray-100 text-sm truncate">{lead.name}</h4>

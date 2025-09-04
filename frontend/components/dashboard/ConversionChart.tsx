@@ -29,7 +29,7 @@ export default function ConversionChart({ data }: ConversionChartProps) {
   };
 
   return (
-    <Card className="bg-blue-900/30 border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-white text-sm">Conversão</CardTitle>
         <CardDescription className="text-blue-200 text-xs">

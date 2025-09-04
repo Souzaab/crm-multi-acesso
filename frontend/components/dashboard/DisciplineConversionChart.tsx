@@ -11,8 +11,8 @@ export default function DisciplineConversionChart({ data }: DisciplineConversion
   // Generate sample monthly conversion data for top 2 disciplines
   const monthlyData = data?.monthly_evolution.slice(-6).map((item, index) => ({
     month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short' }),
-    'Evolunais': Math.max(0, item.converted_leads * 0.6 + (Math.random() - 0.5) * 10),
-    'Distributina': Math.max(0, item.converted_leads * 0.4 + (Math.random() - 0.5) * 8),
+    'Natação': Math.max(0, item.converted_leads * 0.6 + (Math.random() - 0.5) * 10),
+    'Musculação': Math.max(0, item.converted_leads * 0.4 + (Math.random() - 0.5) * 8),
   })) || [];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -32,7 +32,7 @@ export default function DisciplineConversionChart({ data }: DisciplineConversion
   };
 
   return (
-    <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-gray-100">Disciplina % Convertidas</CardTitle>
         <CardDescription className="text-gray-400">
@@ -54,29 +54,29 @@ export default function DisciplineConversionChart({ data }: DisciplineConversion
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
-              dataKey="Evolunais"
-              stroke="#ec4899"
+              dataKey="Natação"
+              stroke="#3b82f6"
               strokeWidth={3}
-              dot={{ fill: '#ec4899', strokeWidth: 2, r: 4 }}
+              dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
             />
             <Line
               type="monotone"
-              dataKey="Distributina"
-              stroke="#06b6d4"
+              dataKey="Musculação"
+              stroke="#60a5fa"
               strokeWidth={3}
-              dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+              dot={{ fill: '#60a5fa', strokeWidth: 2, r: 4 }}
             />
           </LineChart>
         </ResponsiveContainer>
         
         <div className="flex justify-center gap-6 mt-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-            <span className="text-sm text-gray-400">Evolunais</span>
+            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+            <span className="text-sm text-gray-400">Natação</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
-            <span className="text-sm text-gray-400">Distributina</span>
+            <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+            <span className="text-sm text-gray-400">Musculação</span>
           </div>
         </div>
       </CardContent>

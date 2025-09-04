@@ -8,14 +8,14 @@ interface DisciplineChartProps {
 }
 
 const COLORS = [
-  '#ec4899', // pink
-  '#06b6d4', // cyan  
   '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#84cc16', // lime
+  '#60a5fa', // light blue
+  '#1e40af', // dark blue
+  '#2563eb', // medium blue
+  '#1d4ed8', // deep blue
+  '#3730a3', // indigo
+  '#4338ca', // violet
+  '#5b21b6', // purple
 ];
 
 export default function DisciplineChart({ data }: DisciplineChartProps) {
@@ -43,7 +43,7 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm h-full">
+      <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-gray-100 text-sm">Disciplinas</CardTitle>
           <CardDescription className="text-gray-400 text-xs">
@@ -60,7 +60,7 @@ export default function DisciplineChart({ data }: DisciplineChartProps) {
   }
 
   return (
-    <Card className="bg-slate-800/50 border-gray-600 backdrop-blur-sm h-full flex flex-col">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-gray-100 text-sm">Disciplinas</CardTitle>
         <CardDescription className="text-gray-400 text-xs">

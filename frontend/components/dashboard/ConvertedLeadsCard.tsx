@@ -27,7 +27,7 @@ export default function ConvertedLeadsCard({ data }: ConvertedLeadsCardProps) {
   };
 
   return (
-    <Card className="bg-blue-900/30 border-blue-500/30 backdrop-blur-sm">
+    <Card className="bg-black border-blue-500/30 backdrop-blur-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
