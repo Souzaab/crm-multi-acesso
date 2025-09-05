@@ -10,9 +10,9 @@ import Leads from './pages/Leads';
 import Units from './pages/Units';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
-import Diagnostics from './pages/Diagnostics';
-import Tools from './pages/Tools';
-import DatabaseInfo from './pages/DatabaseInfo';
+// import Diagnostics from './pages/Diagnostics';
+// import Tools from './pages/Tools';
+// import DatabaseInfo from './pages/DatabaseInfo';
 import backend from '~backend/client';
 
 const queryClient = new QueryClient({
@@ -81,9 +81,9 @@ function MainApp() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/units" element={<Units />} />
           <Route path="/users" element={<Users />} />
-          <Route path="/diagnostics" element={<Diagnostics />} />
-          <Route path="/tools" element={<Tools />} />
-          <Route path="/database" element={<DatabaseInfo />} />
+          {/* <Route path="/diagnostics" element={<Diagnostics />} /> */}
+          {/* <Route path="/tools" element={<Tools />} /> */}
+          {/* <Route path="/database" element={<DatabaseInfo />} /> */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
