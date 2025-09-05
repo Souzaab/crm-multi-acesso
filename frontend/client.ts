@@ -415,20 +415,18 @@ export namespace leads {
         }
 
         /**
-         * Retrieves all leads for a tenant with advanced filtering and sorting.
+         * Retrieves a list of leads with optional filtering and pagination.
          */
         public async list(params: RequestType<typeof api_leads_list_list>): Promise<ResponseType<typeof api_leads_list_list>> {
             // Convert our params into the objects we need for the request
             const query = makeRecord<string, string | string[]>({
-                channel:     params.channel,
                 discipline:  params.discipline,
-                endDate:     params.endDate,
+                limit:       params.limit === undefined ? undefined : String(params.limit),
+                page:        params.page === undefined ? undefined : String(params.page),
                 search:      params.search,
-                sortBy:      params.sortBy === undefined ? undefined : String(params.sortBy),
-                sortOrder:   params.sortOrder === undefined ? undefined : String(params.sortOrder),
-                startDate:   params.startDate,
                 status:      params.status,
                 "tenant_id": params["tenant_id"],
+                "unit_id":   params["unit_id"],
             })
 
             // Now make the actual call to the API
@@ -442,22 +440,18 @@ export namespace leads {
         public async update(params: RequestType<typeof api_leads_update_update>): Promise<ResponseType<typeof api_leads_update_update>> {
             // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
             const body: Record<string, any> = {
-                "age_group":          params["age_group"],
-                "ai_interaction_log": params["ai_interaction_log"],
-                attended:             params.attended,
-                converted:            params.converted,
-                discipline:           params.discipline,
-                "interest_level":     params["interest_level"],
-                name:                 params.name,
-                observations:         params.observations,
-                "origin_channel":     params["origin_channel"],
-                "scheduled_date":     params["scheduled_date"],
-                status:               params.status,
-                "tenant_id":          params["tenant_id"],
-                "unit_id":            params["unit_id"],
-                "user_id":            params["user_id"],
-                "whatsapp_number":    params["whatsapp_number"],
-                "who_searched":       params["who_searched"],
+                age:               params.age,
+                attended:          params.attended,
+                converted:         params.converted,
+                discipline:        params.discipline,
+                "interest_level":  params["interest_level"],
+                name:              params.name,
+                notes:             params.notes,
+                "origin_channel":  params["origin_channel"],
+                status:            params.status,
+                "unit_id":         params["unit_id"],
+                "whatsapp_number": params["whatsapp_number"],
+                "who_searched":    params["who_searched"],
             }
 
             // Now make the actual call to the API

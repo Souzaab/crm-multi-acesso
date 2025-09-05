@@ -1,76 +1,122 @@
 import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { leadsDB } from "./db";
-import type { Lead } from "./create";
+import log from "encore.dev/log";
 
 export interface ListLeadsRequest {
   tenant_id: Query<string>;
-  search?: Query<string>;
-  channel?: Query<string>;
-  discipline?: Query<string>;
+  unit_id?: Query<string>;
   status?: Query<string>;
-  startDate?: Query<string>;
-  endDate?: Query<string>;
-  sortBy?: Query<"name" | "created_at" | "status">;
-  sortOrder?: Query<"asc" | "desc">;
+  discipline?: Query<string>;
+  page?: Query<number>;
+  limit?: Query<number>;
+  search?: Query<string>;
+}
+
+export interface Lead {
+  id: string;
+  name: string;
+  whatsapp_number: string;
+  discipline: string;
+  age: string;
+  who_searched: string;
+  origin_channel: string;
+  interest_level: string;
+  status: string;
+  tenant_id: string;
+  unit_id?: string;
+  created_at: Date;
+  updated_at: Date;
+  attended?: boolean;
+  converted?: boolean;
+  notes?: string;
 }
 
 export interface ListLeadsResponse {
   leads: Lead[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
-// Retrieves all leads for a tenant with advanced filtering and sorting.
+// Retrieves a list of leads with optional filtering and pagination.
 export const list = api<ListLeadsRequest, ListLeadsResponse>(
   { expose: true, method: "GET", path: "/leads" },
   async (req) => {
-    const whereClauses: string[] = [];
-    const params: any[] = [req.tenant_id];
+    try {
+      log.info("Listing leads", { req });
 
-    if (req.search) {
-      params.push(`%${req.search}%`);
-      whereClauses.push(`(name ILIKE $${params.length} OR whatsapp_number ILIKE $${params.length})`);
-    }
-    
-    if (req.channel) {
-      params.push(req.channel);
-      whereClauses.push(`origin_channel = $${params.length}`);
-    }
-    
-    if (req.discipline) {
-      params.push(req.discipline);
-      whereClauses.push(`discipline = $${params.length}`);
-    }
+      const page = req.page || 1;
+      const limit = req.limit || 50;
+      const offset = (page - 1) * limit;
 
-    if (req.status) {
-      params.push(req.status);
-      whereClauses.push(`status = $${params.length}`);
-    }
+      // Build where conditions
+      const conditions: string[] = ["tenant_id = $1"];
+      const params: any[] = [req.tenant_id];
+      let paramCount = 2;
 
-    if (req.startDate) {
-      params.push(req.startDate);
-      whereClauses.push(`created_at >= $${params.length}`);
-    }
+      if (req.unit_id) {
+        conditions.push(`unit_id = $${paramCount++}`);
+        params.push(req.unit_id);
+      }
 
-    if (req.endDate) {
-      params.push(req.endDate);
-      whereClauses.push(`created_at <= $${params.length}`);
-    }
+      if (req.status) {
+        conditions.push(`status = $${paramCount++}`);
+        params.push(req.status);
+      }
 
-    let query = `SELECT * FROM leads WHERE tenant_id = $1`;
-    if (whereClauses.length > 0) {
-      query += ` AND ${whereClauses.join(" AND ")}`;
-    }
+      if (req.discipline) {
+        conditions.push(`discipline = $${paramCount++}`);
+        params.push(req.discipline);
+      }
 
-    const validSortBy = ["name", "created_at", "status"];
-    const sortBy = validSortBy.includes(req.sortBy || "") ? req.sortBy : "created_at";
-    const sortOrder = req.sortOrder === "asc" ? "ASC" : "DESC";
-    query += ` ORDER BY ${sortBy} ${sortOrder}`;
+      if (req.search) {
+        conditions.push(`(name ILIKE $${paramCount} OR whatsapp_number ILIKE $${paramCount})`);
+        params.push(`%${req.search}%`);
+        paramCount++;
+      }
 
-    const leads: Lead[] = [];
-    for await (const row of leadsDB.rawQuery<Lead>(query, ...params)) {
-      leads.push(row);
+      const whereClause = conditions.join(' AND ');
+
+      // Get total count
+      const countResult = await leadsDB.rawQueryRow<{count: number}>(
+        `SELECT COUNT(*)::int as count FROM leads WHERE ${whereClause}`,
+        ...params
+      );
+      const total = countResult?.count || 0;
+
+      // Get leads with pagination
+      const leads: Lead[] = [];
+      for await (const row of leadsDB.rawQuery<Lead>(
+        `SELECT * FROM leads 
+         WHERE ${whereClause}
+         ORDER BY created_at DESC 
+         LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
+        ...params, limit, offset
+      )) {
+        leads.push(row);
+      }
+
+      const totalPages = Math.ceil(total / limit);
+
+      log.info("Leads listed successfully", { 
+        count: leads.length, 
+        total, 
+        page, 
+        totalPages 
+      });
+
+      return {
+        leads,
+        total,
+        page,
+        limit,
+        total_pages: totalPages
+      };
+    } catch (error) {
+      log.error("Error listing leads", { error: (error as Error).message });
+      throw error;
     }
-    
-    return { leads };
   }
 );
