@@ -11,9 +11,11 @@ interface PipelineColumnProps {
   };
   leads: Lead[];
   onCardClick: (lead: Lead) => void;
+  onDelete: (lead: Lead) => void;
+  canDelete: boolean;
 }
 
-export default function PipelineColumn({ column, leads, onCardClick }: PipelineColumnProps) {
+export default function PipelineColumn({ column, leads, onCardClick, onDelete, canDelete }: PipelineColumnProps) {
   return (
     <div className="min-w-[320px] w-[320px] flex-shrink-0 bg-black/30 border border-blue-500/20 backdrop-blur-sm rounded-xl flex flex-col">
       <div className="p-4 bg-gradient-to-b from-blue-600/50 to-blue-800/50 rounded-t-xl flex justify-between items-center shadow-inner-top">
@@ -35,7 +37,9 @@ export default function PipelineColumn({ column, leads, onCardClick }: PipelineC
                 key={lead.id} 
                 lead={lead} 
                 index={index} 
-                onCardClick={onCardClick} 
+                onCardClick={onCardClick}
+                onDelete={onDelete}
+                canDelete={canDelete}
               />
             ))}
             {provided.placeholder}

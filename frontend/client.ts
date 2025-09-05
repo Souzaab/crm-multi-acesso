@@ -421,13 +421,10 @@ export namespace leads {
         /**
          * Deletes a lead.
          */
-        public async deleteLead(params: RequestType<typeof api_leads_delete_deleteLead>): Promise<void> {
-            // Convert our params into the objects we need for the request
-            const query = makeRecord<string, string | string[]>({
-                "tenant_id": params["tenant_id"],
-            })
-
-            await this.baseClient.callTypedAPI(`/leads/${encodeURIComponent(params.id)}`, {query, method: "DELETE", body: undefined})
+        public async deleteLead(params: { id: string }): Promise<ResponseType<typeof api_leads_delete_deleteLead>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/leads/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_delete_deleteLead>
         }
 
         /**

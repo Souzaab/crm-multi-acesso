@@ -4,9 +4,11 @@ import type { Lead, UpdateLeadRequest } from '~backend/leads/create';
 import { useToast } from '@/components/ui/use-toast';
 import PipelineColumn from '../components/pipeline/PipelineColumn';
 import LeadDetailsModal from '../components/pipeline/LeadDetailsModal';
+import DeleteLeadDialog from '../components/pipeline/DeleteLeadDialog';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useBackend } from '../hooks/useBackend';
 import { useTenant } from '../App';
+import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
@@ -25,9 +27,11 @@ export default function Pipeline() {
   const queryClient = useQueryClient();
   const backend = useBackend();
   const { selectedTenantId } = useTenant();
+  const { isAdmin } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isCreateLeadOpen, setIsCreateLeadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
 
   const { data: leadsData, isLoading, refetch } = useQuery({
     queryKey: ['leads', selectedTenantId],
@@ -70,6 +74,39 @@ export default function Pipeline() {
       toast({
         title: 'Erro',
         description: error?.message || 'Erro ao atualizar status do lead',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: (leadId: string) => backend.leads.deleteLead({ id: leadId }),
+    onSuccess: (response) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(['leads', selectedTenantId], (oldData: any) => {
+        if (!oldData?.leads) return oldData;
+        return {
+          ...oldData,
+          leads: oldData.leads.filter((lead: Lead) => lead.id !== leadToDelete?.id)
+        };
+      });
+      
+      // Also invalidate to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
+      
+      toast({
+        title: 'Sucesso',
+        description: response.message,
+      });
+      
+      setLeadToDelete(null);
+    },
+    onError: (error: any) => {
+      console.error('Error deleting lead:', error);
+      toast({
+        title: 'Erro ao excluir lead',
+        description: error?.message || 'Não foi possível excluir o lead. Verifique suas permissões.',
         variant: 'destructive',
       });
     },
@@ -128,6 +165,24 @@ export default function Pipeline() {
     // Only update if there are actual changes
     if (statusChanged || attendedChanged) {
       updateLeadMutation.mutate(updatePayload);
+    }
+  };
+
+  const handleDeleteLead = (lead: Lead) => {
+    if (!isAdmin()) {
+      toast({
+        title: 'Acesso negado',
+        description: 'Apenas administradores podem excluir leads',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setLeadToDelete(lead);
+  };
+
+  const confirmDeleteLead = () => {
+    if (leadToDelete) {
+      deleteLeadMutation.mutate(leadToDelete.id);
     }
   };
 
@@ -271,6 +326,8 @@ export default function Pipeline() {
                 column={column}
                 leads={getLeadsForColumn(column.id)}
                 onCardClick={setSelectedLead}
+                onDelete={handleDeleteLead}
+                canDelete={isAdmin()}
               />
             ))}
           </div>
@@ -295,11 +352,20 @@ export default function Pipeline() {
           onOpenChange={(isOpen) => !isOpen && setSelectedLead(null)}
         />
       )}
+      
       <CreateLeadDialog
         open={isCreateLeadOpen}
         onOpenChange={setIsCreateLeadOpen}
         units={unitsData?.units || []}
         selectedTenantId={selectedTenantId}
+      />
+
+      <DeleteLeadDialog
+        lead={leadToDelete}
+        open={!!leadToDelete}
+        onOpenChange={(open) => !open && setLeadToDelete(null)}
+        onConfirm={confirmDeleteLead}
+        isDeleting={deleteLeadMutation.isPending}
       />
     </div>
   );
