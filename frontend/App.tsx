@@ -1,8 +1,10 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import LoginForm from './components/auth/LoginForm';
 import TenantSelector from './components/TenantSelector';
 import Dashboard from './pages/Dashboard';
 import Pipeline from './pages/Pipeline';
@@ -10,10 +12,8 @@ import Leads from './pages/Leads';
 import Units from './pages/Units';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
-// import Diagnostics from './pages/Diagnostics';
-// import Tools from './pages/Tools';
-// import DatabaseInfo from './pages/DatabaseInfo';
-import backend from '~backend/client';
+import { useAuth } from './hooks/useAuth';
+import { useBackend } from './hooks/useBackend';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,23 +35,33 @@ const TenantContext = createContext<{
 
 export const useTenant = () => useContext(TenantContext);
 
-function MainApp() {
-  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+function AuthenticatedApp() {
+  const { user, isMaster } = useAuth();
+  const backend = useBackend();
+  const [selectedTenantId, setSelectedTenantId] = React.useState<string>(user?.tenant_id || '');
 
   const { data: unitsData, isLoading: isLoadingUnits } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
     retry: 3,
     retryDelay: 1000,
+    enabled: isMaster(), // Only masters can list units
   });
 
-  useEffect(() => {
-    if (unitsData?.units && unitsData.units.length > 0 && !selectedTenantId) {
-      setSelectedTenantId(unitsData.units[0].id);
+  React.useEffect(() => {
+    if (user?.tenant_id && !selectedTenantId) {
+      setSelectedTenantId(user.tenant_id);
     }
-  }, [unitsData, selectedTenantId]);
+  }, [user, selectedTenantId]);
 
-  if (isLoadingUnits || !selectedTenantId) {
+  // For non-master users, use their tenant_id directly
+  React.useEffect(() => {
+    if (user && !isMaster()) {
+      setSelectedTenantId(user.tenant_id);
+    }
+  }, [user, isMaster]);
+
+  if ((isMaster() && isLoadingUnits) || !selectedTenantId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -66,24 +76,46 @@ function MainApp() {
   return (
     <TenantContext.Provider value={{ selectedTenantId, setSelectedTenantId }}>
       <Layout>
-        <div className="mb-6">
-          <TenantSelector
-            tenants={unitsData?.units || []}
-            selectedTenantId={selectedTenantId}
-            onTenantChange={setSelectedTenantId}
-            isMaster={true}
-          />
-        </div>
+        {/* Only show tenant selector for masters */}
+        {isMaster() && (
+          <div className="mb-6">
+            <TenantSelector
+              tenants={unitsData?.units || []}
+              selectedTenantId={selectedTenantId}
+              onTenantChange={setSelectedTenantId}
+              isMaster={isMaster()}
+            />
+          </div>
+        )}
+        
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/leads" element={<Leads />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/units" element={<Units />} />
-          <Route path="/users" element={<Users />} />
-          {/* <Route path="/diagnostics" element={<Diagnostics />} /> */}
-          {/* <Route path="/tools" element={<Tools />} /> */}
-          {/* <Route path="/database" element={<DatabaseInfo />} /> */}
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/units"
+            element={
+              <ProtectedRoute requireMaster>
+                <Units />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Layout>
@@ -92,6 +124,8 @@ function MainApp() {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuth();
+
   useEffect(() => {
     document.documentElement.classList.add('dark');
     document.documentElement.style.backgroundColor = '#020817'; // slate-950
@@ -105,7 +139,14 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          <Route path="/*" element={<MainApp />} />
+          <Route 
+            path="/login" 
+            element={isAuthenticated ? <Navigate to="/" /> : <LoginForm />} 
+          />
+          <Route 
+            path="/*" 
+            element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" />} 
+          />
         </Routes>
         <Toaster />
       </Router>

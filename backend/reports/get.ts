@@ -2,6 +2,7 @@ import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { reportsDB } from "./db";
 import { APIError } from "encore.dev/api";
+import { requireAdmin, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
 
 export interface GetReportsRequest {
@@ -30,18 +31,24 @@ export interface GetReportsResponse {
   averageFunnelTime: FunnelTime | null;
 }
 
-// Retrieves a collection of reports for the dashboard.
+// Retrieves a collection of reports for the dashboard (Admin only).
 export const getReports = api<GetReportsRequest, GetReportsResponse>(
-  { expose: true, method: "GET", path: "/reports" },
+  { expose: true, method: "GET", path: "/reports", auth: true },
   async (req) => {
     try {
       log.info("Reports request received", { req });
+      
+      // Only admins can access reports
+      requireAdmin();
       
       const tenantId = req.tenant_id;
 
       if (!tenantId) {
         throw APIError.invalidArgument("tenant_id is required.");
       }
+      
+      // Check tenant access
+      checkTenantAccess(tenantId);
 
       log.info("Using tenant ID for reports", { tenantId });
 

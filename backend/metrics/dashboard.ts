@@ -1,6 +1,7 @@
 import { api, APIError } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { metricsDB } from "./db";
+import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
 
 export interface GetDashboardRequest {
@@ -51,16 +52,22 @@ export interface RecentLead {
 
 // Retrieves dashboard metrics and data for a tenant.
 export const getDashboard = api<GetDashboardRequest, DashboardMetrics>(
-  { expose: true, method: "GET", path: "/metrics/dashboard" },
+  { expose: true, method: "GET", path: "/metrics/dashboard", auth: true },
   async (req) => {
     try {
       log.info("Dashboard request received", { req });
+      
+      // Require authentication
+      requireAuth();
       
       const tenantId = req.tenant_id;
 
       if (!tenantId) {
         throw APIError.invalidArgument("tenant_id is required.");
       }
+      
+      // Check tenant access
+      checkTenantAccess(tenantId);
 
       log.info("Using tenant ID", { tenantId });
 

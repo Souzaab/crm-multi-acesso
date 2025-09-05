@@ -1,5 +1,6 @@
 import { api } from "encore.dev/api";
 import { usersDB } from "./db";
+import { requireAdmin, checkTenantAccess } from "../auth/middleware";
 
 export interface CreateUserRequest {
   name: string;
@@ -25,10 +26,16 @@ export interface User {
   updated_at: Date;
 }
 
-// Creates a new user.
+// Creates a new user (Admin only).
 export const create = api<CreateUserRequest, User>(
-  { expose: true, method: "POST", path: "/users" },
+  { expose: true, method: "POST", path: "/users", auth: true },
   async (req) => {
+    // Only admins can create users
+    requireAdmin();
+    
+    // Check tenant access
+    checkTenantAccess(req.tenant_id);
+    
     const row = await usersDB.queryRow<User>`
       INSERT INTO users (
         name, email, password_hash, role, unit_id, tenant_id, 

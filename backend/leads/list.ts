@@ -1,6 +1,7 @@
 import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { leadsDB } from "./db";
+import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
 
 export interface ListLeadsRequest {
@@ -42,10 +43,16 @@ export interface ListLeadsResponse {
 
 // Retrieves a list of leads with optional filtering and pagination.
 export const list = api<ListLeadsRequest, ListLeadsResponse>(
-  { expose: true, method: "GET", path: "/leads" },
+  { expose: true, method: "GET", path: "/leads", auth: true },
   async (req) => {
     try {
       log.info("Listing leads", { req });
+
+      // Require authentication
+      requireAuth();
+      
+      // Check tenant access
+      checkTenantAccess(req.tenant_id);
 
       const page = req.page || 1;
       const limit = req.limit || 50;

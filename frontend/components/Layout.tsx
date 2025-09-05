@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '../hooks/useAuth';
 import { 
   BarChart3, 
   Kanban, 
@@ -9,36 +10,48 @@ import {
   UserPlus,
   Menu,
   FileText,
-  // Activity,
-  // Settings,
-  // Wrench,
-  // Database
+  LogOut,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: BarChart3 },
-  { name: 'Pipeline', href: '/pipeline', icon: Kanban },
-  { name: 'Leads', href: '/leads', icon: Users },
-  { name: 'Relatórios', href: '/reports', icon: FileText },
-  { name: 'Unidades', href: '/units', icon: Building },
-  { name: 'Usuários', href: '/users', icon: UserPlus },
-  // { name: 'Diagnósticos', href: '/diagnostics', icon: Activity },
-  // { name: 'Ferramentas', href: '/tools', icon: Wrench },
-  // { name: 'Banco de Dados', href: '/database', icon: Database },
+  { name: 'Dashboard', href: '/', icon: BarChart3, roles: ['admin', 'user'] },
+  { name: 'Pipeline', href: '/pipeline', icon: Kanban, roles: ['admin', 'user'] },
+  { name: 'Leads', href: '/leads', icon: Users, roles: ['admin', 'user'] },
+  { name: 'Relatórios', href: '/reports', icon: FileText, roles: ['admin'], requireAdmin: true },
+  { name: 'Unidades', href: '/units', icon: Building, roles: ['admin'], requireMaster: true },
+  { name: 'Usuários', href: '/users', icon: UserPlus, roles: ['admin'], requireAdmin: true },
 ];
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const { user, logout, hasRole, isMaster, isAdmin } = useAuth();
+
+  const isNavItemVisible = (item: any) => {
+    // If requires master, check master
+    if (item.requireMaster) {
+      return isMaster();
+    }
+    // If requires admin, check admin
+    if (item.requireAdmin) {
+      return isAdmin();
+    }
+    // Otherwise check roles
+    return hasRole(item.roles);
+  };
+
+  const visibleNavItems = navigation.filter(isNavItemVisible);
 
   const NavigationItems = () => (
     <>
-      {navigation.map((item) => {
+      {visibleNavItems.map((item) => {
         const isActive = location.pathname === item.href;
         const Icon = item.icon;
         
@@ -69,10 +82,55 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center flex-shrink-0 px-4">
             <h1 className="text-xl font-bold text-white">CRM Multi-Acesso</h1>
           </div>
+          
+          {/* User Info */}
+          {user && (
+            <div className="px-4 mt-4">
+              <div className="p-3 bg-gray-900/50 border border-blue-500/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-white">{user.name}</p>
+                    <p className="text-xs text-gray-400">{user.email}</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {user.is_master && (
+                      <Badge className="bg-purple-900/50 text-purple-300 border-purple-500/30 text-xs">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Master
+                      </Badge>
+                    )}
+                    {user.is_admin && !user.is_master && (
+                      <Badge className="bg-red-900/50 text-red-300 border-red-500/30 text-xs">
+                        Admin
+                      </Badge>
+                    )}
+                    {!user.is_admin && !user.is_master && (
+                      <Badge className="bg-blue-900/50 text-blue-300 border-blue-500/30 text-xs">
+                        Usuário
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-8 flex-grow flex flex-col">
             <nav className="flex-1 px-2 space-y-1">
               <NavigationItems />
             </nav>
+            
+            {/* Logout Button */}
+            <div className="px-2 pb-4">
+              <Button
+                onClick={logout}
+                variant="ghost"
+                className="w-full flex items-center justify-start gap-3 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -89,9 +147,43 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center mb-8">
               <h1 className="text-xl font-bold text-white">CRM Multi-Acesso</h1>
             </div>
-            <nav className="space-y-1">
+            
+            {/* User Info Mobile */}
+            {user && (
+              <div className="mb-6">
+                <div className="p-3 bg-gray-900/50 border border-blue-500/30 rounded-lg">
+                  <p className="text-sm font-medium text-white">{user.name}</p>
+                  <p className="text-xs text-gray-400">{user.email}</p>
+                  <div className="flex gap-1 mt-2">
+                    {user.is_master && (
+                      <Badge className="bg-purple-900/50 text-purple-300 border-purple-500/30 text-xs">
+                        Master
+                      </Badge>
+                    )}
+                    {user.is_admin && !user.is_master && (
+                      <Badge className="bg-red-900/50 text-red-300 border-red-500/30 text-xs">
+                        Admin
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <nav className="space-y-1 flex-1">
               <NavigationItems />
             </nav>
+            
+            <div className="mt-8">
+              <Button
+                onClick={logout}
+                variant="ghost"
+                className="w-full flex items-center justify-start gap-3 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </Button>
+            </div>
           </SheetContent>
         </Sheet>
       </div>

@@ -1,6 +1,7 @@
 import { api } from "encore.dev/api";
 import { Query } from "encore.dev/api";
 import { usersDB } from "./db";
+import { requireAdmin, checkTenantAccess } from "../auth/middleware";
 import type { User } from "./create";
 
 export interface ListUsersRequest {
@@ -11,10 +12,16 @@ export interface ListUsersResponse {
   users: User[];
 }
 
-// Retrieves all users for a tenant.
+// Retrieves all users for a tenant (Admin only).
 export const list = api<ListUsersRequest, ListUsersResponse>(
-  { expose: true, method: "GET", path: "/users" },
+  { expose: true, method: "GET", path: "/users", auth: true },
   async (req) => {
+    // Only admins can list users
+    requireAdmin();
+    
+    // Check tenant access
+    checkTenantAccess(req.tenant_id);
+    
     const users: User[] = [];
     for await (const row of usersDB.rawQuery<User>(
       `SELECT id, name, email, role, unit_id, tenant_id, is_master, is_admin, created_at, updated_at 

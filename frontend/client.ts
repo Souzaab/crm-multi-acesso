@@ -95,6 +95,11 @@ export class Client {
 }
 
 /**
+ * Import the auth handler to be able to derive the auth type
+ */
+import type { auth as auth_auth } from "~backend/auth/auth";
+
+/**
  * ClientOptions allows you to override any default behaviour within the generated Encore client.
  */
 export interface ClientOptions {
@@ -107,6 +112,13 @@ export interface ClientOptions {
 
     /** Default RequestInit to be used for the client */
     requestInit?: Omit<RequestInit, "headers"> & { headers?: Record<string, string> }
+
+    /**
+     * Allows you to set the authentication data to be used for each
+     * request either by passing in a static object or by passing in
+     * a function which returns a new object for each request.
+     */
+    auth?: RequestType<typeof auth_auth> | AuthDataGenerator
 }
 
 /**
@@ -199,6 +211,10 @@ export namespace anotacoes {
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_anotacoes_list_list>
         }
     }
+}
+
+
+export namespace auth {
 }
 
 /**
@@ -556,7 +572,7 @@ export namespace reports {
         }
 
         /**
-         * Retrieves a collection of reports for the dashboard.
+         * Retrieves a collection of reports for the dashboard (Admin only).
          */
         public async getReports(params: RequestType<typeof api_reports_get_getReports>): Promise<ResponseType<typeof api_reports_get_getReports>> {
             // Convert our params into the objects we need for the request
@@ -670,7 +686,7 @@ export namespace units {
         }
 
         /**
-         * Creates a new unit.
+         * Creates a new unit (Master only).
          */
         public async create(params: RequestType<typeof api_units_create_create>): Promise<ResponseType<typeof api_units_create_create>> {
             // Now make the actual call to the API
@@ -679,14 +695,14 @@ export namespace units {
         }
 
         /**
-         * Deletes a unit.
+         * Deletes a unit (Master only).
          */
         public async deleteUnit(params: { id: string }): Promise<void> {
             await this.baseClient.callTypedAPI(`/units/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
         }
 
         /**
-         * Retrieves all units.
+         * Retrieves all units (Master only).
          */
         public async list(): Promise<ResponseType<typeof api_units_list_list>> {
             // Now make the actual call to the API
@@ -695,7 +711,7 @@ export namespace units {
         }
 
         /**
-         * Updates an existing unit.
+         * Updates an existing unit (Master only).
          */
         public async update(params: RequestType<typeof api_units_update_update>): Promise<ResponseType<typeof api_units_update_update>> {
             // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
@@ -734,7 +750,7 @@ export namespace users {
         }
 
         /**
-         * Creates a new user.
+         * Creates a new user (Admin only).
          */
         public async create(params: RequestType<typeof api_users_create_create>): Promise<ResponseType<typeof api_users_create_create>> {
             // Now make the actual call to the API
@@ -743,7 +759,7 @@ export namespace users {
         }
 
         /**
-         * Retrieves all users for a tenant.
+         * Retrieves all users for a tenant (Admin only).
          */
         public async list(params: RequestType<typeof api_users_list_list>): Promise<ResponseType<typeof api_users_list_list>> {
             // Convert our params into the objects we need for the request
@@ -1056,6 +1072,11 @@ type CallParameters = Omit<RequestInit, "headers"> & {
     query?: Record<string, string | string[]>
 }
 
+// AuthDataGenerator is a function that returns a new instance of the authentication data required by this API
+export type AuthDataGenerator = () =>
+  | RequestType<typeof auth_auth>
+  | Promise<RequestType<typeof auth_auth> | undefined>
+  | undefined;
 
 // A fetcher is the prototype for the inbuilt Fetch function
 export type Fetcher = typeof fetch;
@@ -1067,6 +1088,7 @@ class BaseClient {
     readonly fetcher: Fetcher
     readonly headers: Record<string, string>
     readonly requestInit: Omit<RequestInit, "headers"> & { headers?: Record<string, string> }
+    readonly authGenerator?: AuthDataGenerator
 
     constructor(baseURL: string, options: ClientOptions) {
         this.baseURL = baseURL
@@ -1086,9 +1108,41 @@ class BaseClient {
         } else {
             this.fetcher = boundFetch
         }
+
+        // Setup an authentication data generator using the auth data token option
+        if (options.auth !== undefined) {
+            const auth = options.auth
+            if (typeof auth === "function") {
+                this.authGenerator = auth
+            } else {
+                this.authGenerator = () => auth
+            }
+        }
     }
 
     async getAuthData(): Promise<CallParameters | undefined> {
+        let authData: RequestType<typeof auth_auth> | undefined;
+
+        // If authorization data generator is present, call it and add the returned data to the request
+        if (this.authGenerator) {
+            const mayBePromise = this.authGenerator();
+            if (mayBePromise instanceof Promise) {
+                authData = await mayBePromise;
+            } else {
+                authData = mayBePromise;
+            }
+        }
+
+        if (authData) {
+            const data: CallParameters = {};
+
+            data.headers = makeRecord<string, string>({
+                authorization: authData.authorization,
+            });
+
+            return data;
+        }
+
         return undefined;
     }
 

@@ -1,5 +1,6 @@
 import { api, APIError } from "encore.dev/api";
 import { leadsDB } from "./db";
+import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
 
 export interface UpdateLeadRequest {
@@ -39,16 +40,19 @@ export interface Lead {
 
 // Updates an existing lead.
 export const update = api<UpdateLeadRequest, Lead>(
-  { expose: true, method: "PUT", path: "/leads/:id" },
+  { expose: true, method: "PUT", path: "/leads/:id", auth: true },
   async (req) => {
     try {
       log.info("Updating lead", { req });
+
+      // Require authentication
+      requireAuth();
 
       if (!req.id) {
         throw APIError.invalidArgument("Lead ID is required");
       }
 
-      // Check if lead exists
+      // Check if lead exists and get tenant_id
       const existingLead = await leadsDB.queryRow<Lead>`
         SELECT * FROM leads WHERE id = ${req.id}
       `;
@@ -56,6 +60,9 @@ export const update = api<UpdateLeadRequest, Lead>(
       if (!existingLead) {
         throw APIError.notFound("Lead not found");
       }
+
+      // Check tenant access
+      checkTenantAccess(existingLead.tenant_id);
 
       // Build dynamic update query
       const updates: string[] = [];

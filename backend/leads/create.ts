@@ -1,5 +1,6 @@
 import { api, APIError } from "encore.dev/api";
 import { leadsDB } from "./db";
+import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
 
 export interface CreateLeadRequest {
@@ -35,10 +36,16 @@ export interface Lead {
 
 // Creates a new lead.
 export const create = api<CreateLeadRequest, Lead>(
-  { expose: true, method: "POST", path: "/leads" },
+  { expose: true, method: "POST", path: "/leads", auth: true },
   async (req) => {
     try {
       log.info("Creating lead", { req });
+
+      // Require authentication
+      requireAuth();
+      
+      // Check tenant access
+      checkTenantAccess(req.tenant_id);
 
       if (!req.name || !req.whatsapp_number || !req.discipline || !req.age || !req.tenant_id) {
         throw APIError.invalidArgument("Missing required fields: name, whatsapp_number, discipline, age, tenant_id");

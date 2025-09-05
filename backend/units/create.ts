@@ -1,5 +1,6 @@
 import { api } from "encore.dev/api";
 import { unitsDB } from "./db";
+import { requireMaster } from "../auth/middleware";
 
 export interface CreateUnitRequest {
   name: string;
@@ -16,10 +17,13 @@ export interface Unit {
   updated_at: Date;
 }
 
-// Creates a new unit.
+// Creates a new unit (Master only).
 export const create = api<CreateUnitRequest, Unit>(
-  { expose: true, method: "POST", path: "/units" },
+  { expose: true, method: "POST", path: "/units", auth: true },
   async (req) => {
+    // Only masters can create units
+    requireMaster();
+    
     const row = await unitsDB.queryRow<Unit>`
       INSERT INTO units (name, address, phone, updated_at)
       VALUES (${req.name}, ${req.address || null}, ${req.phone || null}, NOW())
