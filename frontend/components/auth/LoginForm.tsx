@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -48,7 +48,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, checkTokenExpiry } = useAuth();
 
   const form = useForm<LoginFormData>({
     defaultValues: {
@@ -57,8 +57,18 @@ export default function LoginForm() {
     },
   });
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    checkTokenExpiry(); // Validate current token
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate, checkTokenExpiry]);
+
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
+      console.log('Attempting login for:', data.email);
+      
       // Hash the password the same way the backend expects
       const hashedPassword = `hash_${data.password}`;
       return backend.users.login({
@@ -67,22 +77,43 @@ export default function LoginForm() {
       });
     },
     onSuccess: async (response) => {
-      // Get user details from token payload
+      console.log('Login response received:', { hasToken: !!response.token });
+      
+      if (!response.token) {
+        throw new Error('No token received from server');
+      }
+
       try {
+        // Decode token to get user data
         const payload = JSON.parse(atob(response.token.split('.')[1]));
-        
-        // Mock user data based on the token payload
-        // In a real app, you'd get this from a separate endpoint
-        const userData = {
-          id: payload.sub,
-          name: payload.email === 'admin@escola.com' ? 'Administrador' : 'Professor Demo',
-          email: payload.email || 'unknown',
-          role: payload.is_master ? 'admin' : 'user',
+        console.log('Token payload:', { 
+          sub: payload.sub, 
           tenant_id: payload.tenant_id,
           is_master: payload.is_master,
           is_admin: payload.is_admin,
+          exp: payload.exp 
+        });
+        
+        // Check if token is already expired
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp < currentTime) {
+          throw new Error('Received token is already expired');
+        }
+        
+        // Create user object from token payload
+        const userData = {
+          id: payload.sub,
+          name: payload.email === 'admin@escola.com' ? 'Administrador' : 'Professor Demo',
+          email: payload.email || form.getValues('email'),
+          role: payload.is_master ? 'admin' : 'user',
+          tenant_id: payload.tenant_id,
+          is_master: payload.is_master || false,
+          is_admin: payload.is_admin || false,
         };
         
+        console.log('Setting auth state with user data:', userData);
+        
+        // Set auth state
         login(response.token, userData);
         
         toast({
@@ -90,9 +121,11 @@ export default function LoginForm() {
           description: `Bem-vindo, ${userData.name}!`,
         });
         
+        // Navigate to home page
         navigate('/');
+        
       } catch (error) {
-        console.error('Error parsing token:', error);
+        console.error('Error processing login response:', error);
         toast({
           title: 'Erro',
           description: 'Erro ao processar token de autenticação',
@@ -102,15 +135,37 @@ export default function LoginForm() {
     },
     onError: (error: any) => {
       console.error('Login error:', error);
+      
+      let errorMessage = 'Email ou senha incorretos';
+      
+      if (error?.message) {
+        if (error.message.includes('token')) {
+          errorMessage = 'Erro de autenticação. Tente novamente.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: 'Erro no login',
-        description: error?.message || 'Email ou senha incorretos',
+        description: errorMessage,
         variant: 'destructive',
       });
     },
   });
 
   const onSubmit = (data: LoginFormData) => {
+    if (!data.email || !data.password) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, preencha todos os campos',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     loginMutation.mutate(data);
   };
 

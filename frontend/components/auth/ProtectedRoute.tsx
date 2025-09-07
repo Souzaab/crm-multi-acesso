@@ -1,5 +1,5 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,14 +17,37 @@ export default function ProtectedRoute({
   requireMaster = false,
   requireAdmin = false 
 }: ProtectedRouteProps) {
-  const { isAuthenticated, hasRole, isMaster, isAdmin } = useAuth();
+  const { isAuthenticated, hasRole, isMaster, isAdmin, isTokenValid, checkTokenExpiry, token } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  // Check token validity on route access
+  useEffect(() => {
+    checkTokenExpiry();
+  }, [checkTokenExpiry, location.pathname]);
+
+  console.log('ProtectedRoute check:', {
+    isAuthenticated,
+    hasToken: !!token,
+    isTokenValid: isTokenValid(),
+    requireMaster,
+    requireAdmin,
+    requiredRoles,
+    pathname: location.pathname
+  });
+
+  // If not authenticated or token is invalid, redirect to login
+  if (!isAuthenticated || !token || !isTokenValid()) {
+    console.warn('Redirecting to login - authentication failed', {
+      isAuthenticated,
+      hasToken: !!token,
+      isTokenValid: isTokenValid()
+    });
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check if master role is required
   if (requireMaster && !isMaster()) {
+    console.warn('Access denied - master role required', { isMaster: isMaster() });
     return (
       <div className="min-h-screen bg-black text-white p-4 lg:p-6 flex items-center justify-center">
         <Alert variant="destructive" className="bg-red-900/50 border-red-500/50 max-w-md">
@@ -43,6 +66,7 @@ export default function ProtectedRoute({
 
   // Check if admin role is required
   if (requireAdmin && !isAdmin()) {
+    console.warn('Access denied - admin role required', { isAdmin: isAdmin() });
     return (
       <div className="min-h-screen bg-black text-white p-4 lg:p-6 flex items-center justify-center">
         <Alert variant="destructive" className="bg-red-900/50 border-red-500/50 max-w-md">
@@ -61,6 +85,10 @@ export default function ProtectedRoute({
 
   // Check specific roles
   if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
+    console.warn('Access denied - required roles not met', { 
+      requiredRoles, 
+      hasRole: hasRole(requiredRoles) 
+    });
     return (
       <div className="min-h-screen bg-black text-white p-4 lg:p-6 flex items-center justify-center">
         <Alert variant="destructive" className="bg-red-900/50 border-red-500/50 max-w-md">
@@ -77,5 +105,6 @@ export default function ProtectedRoute({
     );
   }
 
+  console.log('Access granted to protected route');
   return <>{children}</>;
 }
