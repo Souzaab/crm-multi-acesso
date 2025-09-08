@@ -392,6 +392,7 @@ export namespace integration {
  * Import the endpoint handlers to derive the types for the client.
  */
 import { create as api_leads_create_create } from "~backend/leads/create";
+import { createFromWebhook as api_leads_createFromWebhook_createFromWebhook } from "~backend/leads/createFromWebhook";
 import { deleteLead as api_leads_delete_deleteLead } from "~backend/leads/delete";
 import { list as api_leads_list_list } from "~backend/leads/list";
 import { update as api_leads_update_update } from "~backend/leads/update";
@@ -404,6 +405,7 @@ export namespace leads {
         constructor(baseClient: BaseClient) {
             this.baseClient = baseClient
             this.create = this.create.bind(this)
+            this.createFromWebhook = this.createFromWebhook.bind(this)
             this.deleteLead = this.deleteLead.bind(this)
             this.list = this.list.bind(this)
             this.update = this.update.bind(this)
@@ -416,6 +418,15 @@ export namespace leads {
             // Now make the actual call to the API
             const resp = await this.baseClient.callTypedAPI(`/leads`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_create_create>
+        }
+
+        /**
+         * Creates a new lead from a simple webhook-like request.
+         */
+        public async createFromWebhook(params: RequestType<typeof api_leads_createFromWebhook_createFromWebhook>): Promise<ResponseType<typeof api_leads_createFromWebhook_createFromWebhook>> {
+            // Now make the actual call to the API
+            const resp = await this.baseClient.callTypedAPI(`/leads/webhook`, {method: "POST", body: JSON.stringify(params)})
+            return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_createFromWebhook_createFromWebhook>
         }
 
         /**
@@ -453,13 +464,13 @@ export namespace leads {
         public async update(params: RequestType<typeof api_leads_update_update>): Promise<ResponseType<typeof api_leads_update_update>> {
             // Construct the body with only the fields which we want encoded within the body (excluding query string or header fields)
             const body: Record<string, any> = {
-                age:               params.age,
+                "age_group":       params["age_group"],
                 attended:          params.attended,
                 converted:         params.converted,
                 discipline:        params.discipline,
                 "interest_level":  params["interest_level"],
                 name:              params.name,
-                notes:             params.notes,
+                observations:      params.observations,
                 "origin_channel":  params["origin_channel"],
                 status:            params.status,
                 "unit_id":         params["unit_id"],
