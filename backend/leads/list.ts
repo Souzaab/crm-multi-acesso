@@ -3,6 +3,7 @@ import { Query } from "encore.dev/api";
 import { leadsDB } from "./db";
 import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
+import type { Lead } from "./create";
 
 export interface ListLeadsRequest {
   tenant_id: Query<string>;
@@ -12,25 +13,6 @@ export interface ListLeadsRequest {
   page?: Query<number>;
   limit?: Query<number>;
   search?: Query<string>;
-}
-
-export interface Lead {
-  id: string;
-  name: string;
-  whatsapp_number: string;
-  discipline: string;
-  age: string;
-  who_searched: string;
-  origin_channel: string;
-  interest_level: string;
-  status: string;
-  tenant_id: string;
-  unit_id?: string;
-  created_at: Date;
-  updated_at: Date;
-  attended?: boolean;
-  converted?: boolean;
-  notes?: string;
 }
 
 export interface ListLeadsResponse {

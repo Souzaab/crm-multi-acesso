@@ -2,40 +2,22 @@ import { api, APIError } from "encore.dev/api";
 import { leadsDB } from "./db";
 import { requireAuth, checkTenantAccess } from "../auth/middleware";
 import log from "encore.dev/log";
+import type { Lead } from "./create";
 
 export interface UpdateLeadRequest {
   id: string;
   name?: string;
   whatsapp_number?: string;
   discipline?: string;
-  age?: string;
+  age_group?: string;
   who_searched?: string;
   origin_channel?: string;
   interest_level?: string;
   status?: string;
   attended?: boolean;
   converted?: boolean;
-  notes?: string;
+  observations?: string;
   unit_id?: string;
-}
-
-export interface Lead {
-  id: string;
-  name: string;
-  whatsapp_number: string;
-  discipline: string;
-  age: string;
-  who_searched: string;
-  origin_channel: string;
-  interest_level: string;
-  status: string;
-  tenant_id: string;
-  unit_id?: string;
-  created_at: Date;
-  updated_at: Date;
-  attended?: boolean;
-  converted?: boolean;
-  notes?: string;
 }
 
 // Updates an existing lead.
@@ -97,9 +79,9 @@ export const update = api<UpdateLeadRequest, Lead>(
         updates.push(`discipline = $${paramCount++}`);
         values.push(req.discipline);
       }
-      if (req.age !== undefined) {
+      if (req.age_group !== undefined) {
         updates.push(`age_group = $${paramCount++}`);
-        values.push(req.age);
+        values.push(req.age_group);
       }
       if (req.who_searched !== undefined) {
         updates.push(`who_searched = $${paramCount++}`);
@@ -140,9 +122,9 @@ export const update = api<UpdateLeadRequest, Lead>(
           newConverted: req.converted 
         });
       }
-      if (req.notes !== undefined) {
+      if (req.observations !== undefined) {
         updates.push(`observations = $${paramCount++}`);
-        values.push(req.notes);
+        values.push(req.observations);
       }
       if (req.unit_id !== undefined) {
         updates.push(`unit_id = $${paramCount++}`);
@@ -161,7 +143,7 @@ export const update = api<UpdateLeadRequest, Lead>(
       // Add WHERE clause
       values.push(req.id);
 
-      const updateQuery = `UPDATE leads SET ${updates.join(', ')} WHERE id = $${paramCount}`;
+      const updateQuery = `UPDATE leads SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
       
       log.info("Executing update query", {
         leadId: req.id,
@@ -170,18 +152,7 @@ export const update = api<UpdateLeadRequest, Lead>(
         updatesCount: updates.length
       });
 
-      await leadsDB.rawExec(updateQuery, ...values);
-
-      // Fetch the updated lead
-      const updatedLead = await leadsDB.queryRow<Lead>`
-        SELECT 
-          id, name, whatsapp_number, discipline, age_group as age, 
-          who_searched, origin_channel, interest_level, status, 
-          tenant_id, unit_id, created_at, updated_at, attended, 
-          converted, observations as notes
-        FROM leads 
-        WHERE id = ${req.id}
-      `;
+      const updatedLead = await leadsDB.rawQueryRow<Lead>(updateQuery, ...values);
 
       if (!updatedLead) {
         log.error("Failed to retrieve updated lead", { leadId: req.id });

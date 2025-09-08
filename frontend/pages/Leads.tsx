@@ -9,6 +9,7 @@ import LeadFilters, { LeadFiltersState } from '../components/leads/LeadFilters';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import { useBackend } from '../hooks/useBackend';
 import { useTenant } from '../App';
+import type { Lead } from '~backend/leads/create';
 
 const initialFilters: LeadFiltersState = {
   search: '',
@@ -32,12 +33,9 @@ export default function Leads() {
       tenant_id: selectedTenantId,
       search: filters.search || undefined,
       status: filters.status || undefined,
-      channel: filters.channel || undefined,
-      discipline: filters.discipline || undefined,
-      startDate: filters.dateRange?.from?.toISOString(),
-      endDate: filters.dateRange?.to?.toISOString(),
-      sortBy: sort.sortBy,
-      sortOrder: sort.sortOrder,
+      // discipline: filters.discipline || undefined, // Assuming channel is not a filter on list endpoint
+      // startDate: filters.dateRange?.from?.toISOString(),
+      // endDate: filters.dateRange?.to?.toISOString(),
     }),
     enabled: !!selectedTenantId,
   });
