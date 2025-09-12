@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import type { Lead } from '~backend/leads/create';
+import type { Lead } from '../../src/utils/mocks';
 
 interface DeleteLeadDialogProps {
   lead: Lead | null;

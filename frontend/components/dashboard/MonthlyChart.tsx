@@ -8,14 +8,18 @@ interface MonthlyChartProps {
 }
 
 export default function MonthlyChart({ data }: MonthlyChartProps) {
-  const chartData = data.map(item => ({
-    month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { 
-      month: 'short', 
-      year: '2-digit' 
-    }),
-    'Total de Leads': item.total_leads,
-    'Conversões': item.converted_leads,
-  })).reverse();
+  // Verificação de segurança antes de usar métodos de array
+  const safeData = data || [];
+  const chartData = safeData.map(item => {
+    const date = new Date(item.month + '-01T12:00:00Z');
+    const monthName = date.toLocaleDateString('pt-BR', { month: 'short', timeZone: 'UTC' });
+    const year = date.getUTCFullYear().toString().slice(-2);
+    return {
+      month: `${monthName.replace('.', '')}/${year}`,
+      'Total de Leads': item.total_leads,
+      'Conversões': item.converted_leads,
+    };
+  }).reverse();
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -33,7 +37,7 @@ export default function MonthlyChart({ data }: MonthlyChartProps) {
     return null;
   };
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full">
         <CardHeader className="pb-2">

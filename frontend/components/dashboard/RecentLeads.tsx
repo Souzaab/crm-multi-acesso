@@ -48,14 +48,14 @@ export default function RecentLeads({ leads }: RecentLeadsProps) {
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         <div className="space-y-2 h-full overflow-y-auto">
-          {leads.length === 0 ? (
+          {!leads || leads.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
               <p className="text-sm font-medium">Nenhum lead encontrado</p>
               <p className="text-xs">Os novos leads aparecerão aqui</p>
             </div>
           ) : (
-            leads.slice(0, 5).map((lead) => (
+            (leads || []).slice(0, 5).map((lead) => (
               <div 
                 key={lead.id} 
                 className="flex items-center justify-between p-2 bg-gray-900/50 border border-gray-700 rounded-lg hover:bg-gray-800/50 transition-colors duration-200"

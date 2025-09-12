@@ -1,1 +1,1 @@
-{"id": "crm-multi-acesso-cxzi", "lang": "typescript"}
+{"id": "crm-multi-acesso-cxzi", "lang": "typescript", "experiments": ["bun-runtime"]}

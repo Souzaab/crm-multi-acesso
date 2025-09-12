@@ -1,19 +1,28 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Lead, UpdateLeadRequest } from '~backend/leads/create';
+import type { Lead } from '../src/utils/mocks';
+
+interface UpdateLeadRequest {
+  id: string;
+  status?: string;
+  [key: string]: any;
+}
 import { useToast } from '@/components/ui/use-toast';
 import PipelineColumn from '../components/pipeline/PipelineColumn';
 import LeadDetailsModal from '../components/pipeline/LeadDetailsModal';
 import DeleteLeadDialog from '../components/pipeline/DeleteLeadDialog';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { useBackend } from '../hooks/useBackend';
-import { useTenant } from '../App';
+import { useTenant } from '../contexts/TenantContext';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, CalendarCheck, UserCheck, Clock, Search, Plus, RefreshCw } from 'lucide-react';
+import { Users, CalendarCheck, UserCheck, Clock, Search, Plus, RefreshCw, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LeadsService, UnitsService, useApiStatus } from '../src/services/apiService';
+import type { Unit } from '../src/utils/mocks';
 
 // Mapeamento consistente entre colunas e status do backend
 const columnsConfig = [
@@ -43,6 +52,16 @@ const columnsConfig = [
   },
 ];
 
+// Tipos para compatibilidade com o backend existente
+interface BackendLead extends Lead {
+  tenant_id: string;
+  unit_id: string;
+}
+
+interface BackendUnit extends Unit {
+  tenant_id?: string;
+}
+
 export default function Pipeline() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -53,22 +72,73 @@ export default function Pipeline() {
   const [isCreateLeadOpen, setIsCreateLeadOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  
+  // Status da API usando o novo hook
+  const apiStatus = useApiStatus();
+  const isOfflineMode = apiStatus === 'offline';
 
-  const { data: leadsData, isLoading, refetch } = useQuery({
+  const { data: leadsData, isLoading, error: leadsError, refetch } = useQuery({
     queryKey: ['leads', selectedTenantId],
-    queryFn: () => backend.leads.list({ tenant_id: selectedTenantId }),
+    queryFn: async () => {
+      const leads = await LeadsService.getLeads();
+      // Converte para o formato esperado pelo backend
+      return { 
+        leads: leads.map(lead => ({
+          ...lead,
+          tenant_id: selectedTenantId || 'default',
+          unit_id: lead.unit_id?.toString() || '1'
+        } as BackendLead))
+      };
+    },
     enabled: !!selectedTenantId,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+    refetchInterval: isOfflineMode ? false : 30000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
-  const { data: unitsData } = useQuery({
+  const { data: unitsData, error: unitsError } = useQuery({
     queryKey: ['units'],
-    queryFn: () => backend.units.list(),
+    queryFn: async () => {
+      const units = await UnitsService.getUnits();
+      // Converte para o formato esperado pelo backend
+      return { 
+        units: units.map(unit => ({
+          ...unit,
+          tenant_id: selectedTenantId || 'default'
+        } as BackendUnit))
+      };
+    },
     enabled: !!selectedTenantId,
+    retry: 2,
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: (params: UpdateLeadRequest) => backend.leads.update(params),
+    mutationFn: async (params: UpdateLeadRequest) => {
+      if (isOfflineMode) {
+        // Em modo offline, simula a atualização localmente
+        console.log('🔄 Modo offline: simulando atualização de lead', params);
+        
+        // Simula delay de rede
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Retorna o lead atualizado simulado
+        const currentData = queryClient.getQueryData(['leads', selectedTenantId]) as any;
+        const leadToUpdate = currentData?.leads?.find((l: Lead) => l.id === params.id);
+        
+        if (leadToUpdate) {
+          return {
+            ...leadToUpdate,
+            ...params,
+            updated_at: new Date().toISOString()
+          };
+        }
+        
+        throw new Error('Lead não encontrado');
+      }
+      
+      // Modo online: faz a requisição real
+      return backend.leads.update(params);
+    },
     onSuccess: (updatedLead) => {
       // Optimistically update the cache
       queryClient.setQueryData(['leads', selectedTenantId], (oldData: any) => {
@@ -81,27 +151,46 @@ export default function Pipeline() {
         };
       });
       
-      // Also invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
+      // Also invalidate to ensure consistency (só se não estiver offline)
+      if (!isOfflineMode) {
+        queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
+      }
       
       toast({
         title: 'Sucesso',
-        description: 'Lead atualizado com sucesso',
+        description: isOfflineMode 
+          ? 'Lead atualizado localmente (modo offline)' 
+          : 'Lead atualizado com sucesso',
       });
     },
     onError: (error: any) => {
       console.error('Error updating lead:', error);
       toast({
         title: 'Erro',
-        description: error?.message || 'Erro ao atualizar status do lead',
+        description: isOfflineMode 
+          ? 'Erro ao atualizar lead no modo offline'
+          : error?.message || 'Erro ao atualizar status do lead',
         variant: 'destructive',
       });
     },
   });
 
   const deleteLeadMutation = useMutation({
-    mutationFn: (leadId: string) => backend.leads.deleteLead({ id: leadId }),
+    mutationFn: async (leadId: string) => {
+      if (isOfflineMode) {
+        // Em modo offline, simula a exclusão localmente
+        console.log('🗑️ Modo offline: simulando exclusão de lead', leadId);
+        
+        // Simula delay de rede
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        return { message: 'Lead excluído localmente (modo offline)' };
+      }
+      
+      // Modo online: faz a requisição real
+      return backend.leads.deleteLead({ id: leadId });
+    },
     onSuccess: (response) => {
       // Optimistically update the cache
       queryClient.setQueryData(['leads', selectedTenantId], (oldData: any) => {
@@ -112,9 +201,11 @@ export default function Pipeline() {
         };
       });
       
-      // Also invalidate to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
+      // Also invalidate to ensure consistency (só se não estiver offline)
+      if (!isOfflineMode) {
+        queryClient.invalidateQueries({ queryKey: ['leads', selectedTenantId] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
+      }
       
       toast({
         title: 'Sucesso',
@@ -127,7 +218,9 @@ export default function Pipeline() {
       console.error('Error deleting lead:', error);
       toast({
         title: 'Erro ao excluir lead',
-        description: error?.message || 'Não foi possível excluir o lead. Verifique suas permissões.',
+        description: isOfflineMode 
+          ? 'Erro ao excluir lead no modo offline'
+          : error?.message || 'Não foi possível excluir o lead. Verifique suas permissões.',
         variant: 'destructive',
       });
     },
@@ -301,15 +394,32 @@ export default function Pipeline() {
   }, [leadsData]);
 
   const handleRefresh = () => {
+    toast({
+      title: 'Atualizando dados...',
+      description: 'Verificando conexão com a API e recarregando dados',
+    });
+    
     refetch();
     queryClient.invalidateQueries({ queryKey: ['dashboard', selectedTenantId] });
   };
-
-  // Debug: Log das colunas e leads ao carregar
-  React.useEffect(() => {
+  
+  // useEffect para monitorar mudanças de estado e logs
+  useEffect(() => {
+    if (apiStatus === 'offline') {
+      console.log('🔴 Modo offline ativado - usando mock data');
+    } else if (apiStatus === 'online') {
+      console.log('🟢 Modo online - conectado à API');
+    } else {
+      console.log('🔄 Verificando status da API...');
+    }
+  }, [apiStatus]);
+  
+  // useEffect para debug de dados carregados
+  useEffect(() => {
     if (leadsData?.leads) {
       console.log('🔄 Pipeline data loaded:', {
         totalLeads: leadsData.leads.length,
+        apiStatus,
         columnsConfig,
         leadsByStatus: {
           novo_lead: leadsData.leads.filter(l => l.status === 'novo_lead').length,
@@ -319,7 +429,9 @@ export default function Pipeline() {
         }
       });
     }
-  }, [leadsData]);
+  }, [leadsData, apiStatus]);
+
+
 
   return (
     <div className="min-h-screen bg-black text-white p-4 lg:p-6 flex flex-col">
@@ -361,6 +473,33 @@ export default function Pipeline() {
             </Button>
           </div>
         </div>
+
+        {/* Status de Conexão */}
+        {apiStatus === 'offline' && (
+          <Alert className="border-orange-500/50 bg-orange-500/10">
+            <div className="flex items-center gap-2">
+              <WifiOff className="h-4 w-4 text-orange-400" />
+              <AlertDescription className="text-orange-200">
+                <strong>Modo Offline:</strong> API indisponível. Usando dados de demonstração.
+                <br />
+                <span className="text-sm text-orange-300">
+                  As alterações serão salvas localmente. Clique em "Atualizar" para tentar reconectar.
+                </span>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+        
+        {apiStatus === 'online' && leadsData && (
+          <Alert className="border-green-500/50 bg-green-500/10">
+            <div className="flex items-center gap-2">
+              <Wifi className="h-4 w-4 text-green-400" />
+              <AlertDescription className="text-green-200">
+                <strong>Online:</strong> Conectado à API. Dados sincronizados em tempo real.
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
 
         {/* Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

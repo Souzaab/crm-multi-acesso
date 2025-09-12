@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Building } from 'lucide-react';
-import type { Unit } from '~backend/units/create';
+import type { Unit } from '../../src/utils/mocks';
 
 interface UnitsTableProps {
   units: Unit[];

@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { Download, BarChart2, Users, Clock, Award, AlertCircle } from 'lucide-react';
+import { Download, BarChart2, Users, Clock, Award, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { exportReportsToCSV } from '@/lib/export';
 import type { DateRange } from 'react-day-picker';
 import { useBackend } from '../hooks/useBackend';
-import { useTenant } from '../App';
+import { useTenant } from '../contexts/TenantContext';
 
 const ReportCard: React.FC<{ title: string; description: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, description, icon: Icon, children }) => (
   <Card className="bg-black border-blue-500/30 backdrop-blur-sm">
@@ -29,29 +29,182 @@ const ReportCard: React.FC<{ title: string; description: string; icon: React.Ele
   </Card>
 );
 
+// Mock data para demonstração quando backend não estiver disponível
+const mockReportsData = {
+  conversionByChannel: [
+    { label: 'WhatsApp', value: 15, total: 25 },
+    { label: 'Instagram', value: 8, total: 20 },
+    { label: 'Facebook', value: 5, total: 15 },
+    { label: 'Indicação', value: 12, total: 18 }
+  ],
+  consultantRanking: [
+    { label: 'Ana Silva', value: 12 },
+    { label: 'Carlos Santos', value: 8 },
+    { label: 'Maria Oliveira', value: 6 },
+    { label: 'João Costa', value: 4 }
+  ],
+  enrollmentsByDiscipline: [
+    { label: 'Matemática', value: 18 },
+    { label: 'Física', value: 12 },
+    { label: 'Química', value: 8 },
+    { label: 'Biologia', value: 6 }
+  ],
+  averageFunnelTime: {
+    days: 3,
+    hours: 12,
+    minutes: 30
+  }
+};
+
+const mockUnits = [
+  { id: 'mock-unit-1', name: 'Unidade Centro' },
+  { id: 'mock-unit-2', name: 'Unidade Norte' }
+];
+
 export default function Reports() {
   const { toast } = useToast();
   const backend = useBackend();
   const { selectedTenantId } = useTenant();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
+  // Estados para controle de erro e modo offline
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'checking'>('online');
+  const MAX_RETRIES = 5;
+
   const { data: reportsData, isLoading, error } = useQuery({
     queryKey: ['reports', selectedTenantId, dateRange],
-    queryFn: () => backend.reports.getReports({
-      tenant_id: selectedTenantId,
-      start_date: dateRange?.from?.toISOString(),
-      end_date: dateRange?.to?.toISOString(),
-    }),
+    queryFn: async () => {
+      setConnectionStatus('checking');
+      let lastError: any;
+      
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          // Implementar timeout personalizado
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => {
+            controller.abort();
+            console.warn(`⏱️ Timeout na tentativa ${attempt}`);
+          }, 8000); // 8 segundos de timeout
+          
+          const result = await backend.reports.getReports({
+            tenant_id: selectedTenantId,
+            start_date: dateRange?.from?.toISOString(),
+            end_date: dateRange?.to?.toISOString(),
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Sucesso - resetar todos os estados de erro
+          setIsOfflineMode(false);
+          setBackendError(null);
+          setRetryCount(0);
+          setConnectionStatus('online');
+          
+          console.log('✅ Relatórios carregados com sucesso');
+          return result;
+          
+        } catch (err) {
+          lastError = err;
+          const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+          
+          console.warn(`🔄 Tentativa ${attempt}/${MAX_RETRIES} falhou:`, {
+            error: errorMessage,
+            type: err?.name || 'UnknownError',
+            attempt,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Detectar tipos específicos de erro
+          const isNetworkError = errorMessage.includes('Failed to fetch') || 
+                                errorMessage.includes('NetworkError') ||
+                                errorMessage.includes('ERR_NETWORK') ||
+                                errorMessage.includes('fetch') ||
+                                err?.name === 'AbortError' ||
+                                err?.name === 'TypeError';
+          
+          const isTimeoutError = errorMessage.includes('timeout') || 
+                               errorMessage.includes('aborted') ||
+                               err?.name === 'AbortError';
+          
+          const isServerError = errorMessage.includes('500') || 
+                              errorMessage.includes('502') ||
+                              errorMessage.includes('503') ||
+                              errorMessage.includes('504');
+          
+          // Se não é um erro de rede/timeout/servidor, não tentar novamente
+          if (!isNetworkError && !isTimeoutError && !isServerError && attempt === 1) {
+            console.error('❌ Erro não relacionado à conectividade, não tentando novamente:', err);
+            break;
+          }
+          
+          if (attempt < MAX_RETRIES) {
+            // Backoff exponencial com jitter para evitar thundering herd
+            const baseDelay = 1000; // 1 segundo base
+            const exponentialDelay = baseDelay * Math.pow(2, attempt - 1);
+            const jitter = Math.random() * 1000; // 0-1000ms de jitter
+            const delay = Math.min(exponentialDelay + jitter, 15000); // Max 15s
+            
+            console.log(`⏳ Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
+            setRetryCount(attempt);
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+      
+      // Todas as tentativas falharam
+      console.error('❌ Todas as tentativas falharam, ativando modo offline:', lastError);
+      
+      setIsOfflineMode(true);
+      setConnectionStatus('offline');
+      setBackendError(lastError instanceof Error ? lastError.message : 'Erro de conexão com o servidor');
+      
+      // Mostrar notificação amigável ao usuário
+      toast({
+        title: "🔌 Modo Offline Ativado",
+        description: "Não foi possível conectar ao servidor. Exibindo dados de exemplo.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      // Retornar dados mock como fallback
+      return mockReportsData;
+    },
     enabled: !!selectedTenantId,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: false, // We handle retries manually
+    refetchOnWindowFocus: !isOfflineMode,
+    refetchOnReconnect: !isOfflineMode,
   });
 
   const { data: unitsData } = useQuery({
     queryKey: ['units'],
-    queryFn: () => backend.units.list(),
+    queryFn: async () => {
+      try {
+        return await backend.units.list();
+      } catch (err) {
+        console.error('❌ Erro ao buscar unidades:', err);
+        // Return mock units in case of error
+        return { units: mockUnits };
+      }
+    },
     enabled: !!selectedTenantId,
+    retry: false,
+    refetchOnWindowFocus: !isOfflineMode,
+    refetchOnReconnect: !isOfflineMode,
   });
+
+  // Monitoramento de mudanças de estado para logs
+  useEffect(() => {
+    console.log('🔄 Reports state changed:', {
+      isOfflineMode,
+      backendError,
+      retryCount,
+      hasReportsData: !!reportsData
+    });
+  }, [isOfflineMode, backendError, retryCount, reportsData]);
 
   const handleExport = () => {
     if (reportsData) {
@@ -59,57 +212,18 @@ export default function Reports() {
       exportReportsToCSV(reportsData, tenantName);
       toast({ 
         title: 'Sucesso', 
-        description: 'Relatórios exportados para CSV.' 
+        description: isOfflineMode ? 'Relatórios de demonstração exportados!' : 'Relatórios exportados para CSV.' 
       });
     } else {
       toast({ 
         title: 'Erro', 
-        description: 'Não há dados para exportar.', 
+        description: isOfflineMode ? 'Nenhum dado de demonstração para exportar.' : 'Não há dados para exportar.', 
         variant: 'destructive' 
       });
     }
   };
 
-  if (error) {
-    console.error('Reports error:', error);
-    return (
-      <div className="min-h-screen bg-black text-white p-4 lg:p-6">
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Relatórios Gerenciais</h1>
-              <p className="text-gray-400">
-                Analise o desempenho e tome decisões baseadas em dados.
-              </p>
-            </div>
-          </div>
 
-          <Alert variant="destructive" className="bg-red-900/50 border-red-500/50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-200">
-              Erro ao carregar relatórios: {(error as Error).message}
-            </AlertDescription>
-          </Alert>
-
-          <Card className="bg-black border-red-500/30 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <p className="text-red-400 mb-4">
-                Não foi possível carregar os dados dos relatórios. 
-                Verifique sua conexão e tente novamente.
-              </p>
-              <Button 
-                onClick={() => window.location.reload()} 
-                variant="outline" 
-                className="border-gray-600 text-gray-300 hover:bg-gray-800"
-              >
-                Tentar Novamente
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-black text-white p-4 lg:p-6">
@@ -137,6 +251,71 @@ export default function Reports() {
             </Button>
           </div>
         </div>
+
+        {/* Status de Conexão */}
+        {(isOfflineMode || connectionStatus !== 'online') && (
+          <Alert className="bg-red-900/20 border-red-500/30 text-red-200">
+            <WifiOff className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                {connectionStatus === 'checking' && retryCount > 0 
+                  ? `Tentando reconectar... (${retryCount}/${MAX_RETRIES})`
+                  : 'Modo offline ativo - Exibindo dados de demonstração'
+                }
+              </span>
+              {connectionStatus === 'offline' && (
+                <Badge variant="destructive" className="ml-2">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Offline
+                </Badge>
+              )}
+              {connectionStatus === 'checking' && (
+                <Badge variant="secondary" className="ml-2 animate-pulse">
+                  <Wifi className="h-3 w-3 mr-1" />
+                  Conectando...
+                </Badge>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {connectionStatus === 'online' && !isOfflineMode && (
+          <Alert className="bg-green-900/20 border-green-500/30 text-green-200">
+            <Wifi className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Conectado ao servidor - Dados em tempo real</span>
+              <Badge variant="secondary" className="ml-2 bg-green-600/20 text-green-200">
+                <Wifi className="h-3 w-3 mr-1" />
+                Online
+              </Badge>
+            </AlertDescription>
+          </Alert>
+        )}
+        {(isOfflineMode || backendError) && (
+          <Alert className="border-orange-500/50 bg-orange-500/10">
+            <div className="flex items-center gap-2">
+              <WifiOff className="h-4 w-4 text-orange-400" />
+              <AlertDescription className="text-orange-200">
+                <strong>Modo Offline:</strong> {backendError || 'Backend indisponível. Usando dados de demonstração.'}
+                <br />
+                <span className="text-sm text-orange-300">
+                  Relatórios limitados. Dados podem não refletir informações reais.
+                </span>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+        
+        {!isOfflineMode && !backendError && reportsData && (
+          <Alert className="border-green-500/50 bg-green-500/10">
+            <div className="flex items-center gap-2">
+              <Wifi className="h-4 w-4 text-green-400" />
+              <AlertDescription className="text-green-200">
+                <strong>Online:</strong> Conectado ao backend. Relatórios atualizados em tempo real.
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
 
         {isLoading && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

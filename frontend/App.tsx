@@ -1,4 +1,4 @@
-import React, { useEffect, createContext, useContext } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -9,11 +9,15 @@ import TenantSelector from './components/TenantSelector';
 import Dashboard from './pages/Dashboard';
 import Pipeline from './pages/Pipeline';
 import Leads from './pages/Leads';
+import Integrations from './pages/Integrations';
+import Agenda from './pages/Agenda';
 import Units from './pages/Units';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
+import OAuthCallback from './pages/OAuthCallback';
 import { useAuth } from './hooks/useAuth';
 import { useBackend } from './hooks/useBackend';
+import TenantContext, { useTenant } from './contexts/TenantContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,27 +29,20 @@ const queryClient = new QueryClient({
   },
 });
 
-const TenantContext = createContext<{
-  selectedTenantId: string;
-  setSelectedTenantId: (id: string) => void;
-}>({
-  selectedTenantId: '',
-  setSelectedTenantId: () => {},
-});
 
-export const useTenant = () => useContext(TenantContext);
 
 function AuthenticatedApp() {
   const { user, isMaster } = useAuth();
   const backend = useBackend();
   const [selectedTenantId, setSelectedTenantId] = React.useState<string>(user?.tenant_id || '');
 
-  const { data: unitsData, isLoading: isLoadingUnits } = useQuery({
+  const { data: unitsData, isLoading: isLoadingUnits, error: unitsError } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
-    retry: 3,
+    retry: 2,
     retryDelay: 1000,
     enabled: isMaster(), // Only masters can list units
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   React.useEffect(() => {
@@ -61,27 +58,49 @@ function AuthenticatedApp() {
     }
   }, [user, isMaster]);
 
-  if ((isMaster() && isLoadingUnits) || !selectedTenantId) {
+  // Show loading only for masters who need units data and don't have selectedTenantId yet
+  if (isMaster() && isLoadingUnits && !selectedTenantId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-foreground mb-4">Carregando CRM...</h2>
-          <p className="text-muted-foreground">Configurando conexão com Supabase</p>
+          <p className="text-muted-foreground">Configurando conexão com o sistema</p>
           <div className="mt-4 w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   }
 
+  // Show error if units failed to load for masters
+  if (isMaster() && unitsError && !selectedTenantId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Erro ao carregar</h2>
+          <p className="text-muted-foreground mb-4">Não foi possível carregar as unidades. Usando configuração padrão.</p>
+          <button 
+            onClick={() => setSelectedTenantId(user?.tenant_id || '1')}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Continuar mesmo assim
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // For non-masters or when we have selectedTenantId, proceed
+  const finalSelectedTenantId = selectedTenantId || user?.tenant_id || '1';
+
   return (
-    <TenantContext.Provider value={{ selectedTenantId, setSelectedTenantId }}>
+    <TenantContext.Provider value={{ selectedTenantId: finalSelectedTenantId, setSelectedTenantId }}>
       <Layout>
         {/* Only show tenant selector for masters */}
         {isMaster() && (
           <div className="mb-6">
             <TenantSelector
               tenants={unitsData?.units || []}
-              selectedTenantId={selectedTenantId}
+              selectedTenantId={finalSelectedTenantId}
               onTenantChange={setSelectedTenantId}
               isMaster={isMaster()}
             />
@@ -92,6 +111,9 @@ function AuthenticatedApp() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/leads" element={<Leads />} />
+          <Route path="/integrations" element={<Integrations />} />
+          <Route path="/integracoes/agenda" element={<Agenda />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route
             path="/reports"
             element={
@@ -127,12 +149,9 @@ export default function App() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    // Force dark theme for now - let users control this later
     document.documentElement.classList.add('dark');
-    document.documentElement.style.backgroundColor = '#020817'; // slate-950
-    return () => {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.style.backgroundColor = '';
-    };
+    document.body.style.backgroundColor = '#0f172a';
   }, []);
 
   return (

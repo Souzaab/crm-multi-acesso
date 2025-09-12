@@ -11,11 +11,14 @@ import {
   Menu,
   FileText,
   LogOut,
-  Shield
+  Shield,
+  Link as LinkIcon,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { useTodayEventsCount } from '../hooks/useCalendar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,6 +28,8 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: BarChart3, roles: ['admin', 'user'] },
   { name: 'Pipeline', href: '/pipeline', icon: Kanban, roles: ['admin', 'user'] },
   { name: 'Leads', href: '/leads', icon: Users, roles: ['admin', 'user'] },
+  { name: 'Agenda', href: '/integracoes/agenda', icon: Calendar, roles: ['admin', 'user'], showBadge: true },
+  { name: 'Integrações', href: '/integrations', icon: LinkIcon, roles: ['admin', 'user'] },
   { name: 'Relatórios', href: '/reports', icon: FileText, roles: ['admin'], requireAdmin: true },
   { name: 'Unidades', href: '/units', icon: Building, roles: ['admin'], requireMaster: true },
   { name: 'Usuários', href: '/users', icon: UserPlus, roles: ['admin'], requireAdmin: true },
@@ -33,6 +38,7 @@ const navigation = [
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { user, logout, hasRole, isMaster, isAdmin } = useAuth();
+  const { data: todayEventsCount = 0 } = useTodayEventsCount();
 
   const isNavItemVisible = (item: any) => {
     // If requires master, check master
@@ -68,6 +74,11 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Icon className="h-5 w-5" />
             <span>{item.name}</span>
+            {item.showBadge && todayEventsCount > 0 && (
+              <Badge variant="secondary" className="ml-auto bg-blue-600 text-white text-xs">
+                {todayEventsCount}
+              </Badge>
+            )}
           </Link>
         );
       })}

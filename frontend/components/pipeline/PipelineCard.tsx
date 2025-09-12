@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Phone, Calendar, User, Clock, Trash2 } from 'lucide-react';
-import type { Lead } from '~backend/leads/create';
+import type { Lead } from '../../src/utils/mocks';
 import { cn } from '@/lib/utils';
 
 interface PipelineCardProps {
@@ -124,7 +124,7 @@ export default function PipelineCard({ lead, index, onCardClick, onDelete, canDe
                   <span className="truncate">{lead.who_searched}</span>
                 </div>
                 <div className="text-xs text-gray-500 truncate">
-                  {lead.discipline} • {lead.age_group}
+                  {lead.discipline} • {lead.age}
                 </div>
                 <div className="text-xs text-gray-500 truncate">
                   {lead.whatsapp_number}

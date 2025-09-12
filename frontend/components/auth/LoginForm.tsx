@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import backend from '~backend/client';
+// import backend from '~backend/client'; // Removido - não está sendo usado no código
 import { useAuth } from '../../hooks/useAuth';
+import { loginMock, shouldUseMockAuth, getMockCredentials } from '../../lib/auth-mock';
+import { CONFIG } from '../../src/config/environment';
 import {
   Card,
   CardContent,
@@ -29,20 +31,8 @@ interface LoginFormData {
   password: string;
 }
 
-const sampleCredentials = [
-  {
-    email: 'admin@escola.com',
-    password: '123456',
-    role: 'Master',
-    description: 'Acesso completo ao sistema'
-  },
-  {
-    email: 'professor@escola.com', 
-    password: '123456',
-    role: 'Usuário',
-    description: 'Acesso operacional (Dashboard, Pipeline, Leads)'
-  }
-];
+// Get sample credentials from mock system
+const sampleCredentials = getMockCredentials();
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -59,28 +49,85 @@ export default function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
-      // Hash the password the same way the backend expects
-      const hashedPassword = `hash_${data.password}`;
-      return backend.users.login({
-        email: data.email,
-        password_hash: hashedPassword,
-      });
+      // Check if we should use mock authentication
+      if (shouldUseMockAuth()) {
+        console.log('🔧 Usando autenticação mock (desenvolvimento)');
+        return await loginMock(data.email, data.password);
+      }
+      
+      // Use fetch directly to call the real backend
+      const apiBase = CONFIG.API.CLIENT_TARGET;
+      
+      try {
+        console.log('🔗 Fazendo login para:', `${apiBase}/api/users/login`);
+        
+        const response = await fetch(`${apiBase}/api/users/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password, // Send plain password as expected by simple backend
+          }),
+        });
+        
+        console.log('📡 Resposta recebida:', response.status, response.statusText);
+        
+        // Safe JSON parsing with better error handling
+        let responseData = null;
+        try {
+          const text = await response.text();
+          console.log('📄 Texto da resposta:', text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+          
+          if (!text || text.trim() === '') {
+            throw new Error('Servidor retornou resposta vazia');
+          }
+          
+          responseData = JSON.parse(text);
+        } catch (parseError) {
+          console.error('❌ Erro ao parsear JSON:', parseError);
+          console.error('📄 Texto recebido:', typeof text === 'string' ? text : 'Não é uma string');
+          throw new Error('Servidor retornou resposta inválida. Verifique se o backend está funcionando corretamente.');
+        }
+        
+        if (!response.ok) {
+          const errorMessage = responseData?.message || responseData?.error || `Erro HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(errorMessage);
+        }
+        
+        if (!responseData) {
+          throw new Error('Resposta do servidor está vazia');
+        }
+        
+        console.log('✅ Login bem-sucedido:', responseData);
+        return responseData;
+      } catch (networkError) {
+        // Handle network errors (server offline, etc.)
+        console.error('❌ Erro de rede:', networkError);
+        
+        if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
+          throw new Error('🔌 Servidor indisponível. Verifique se o backend está rodando na porta 4000 ou ative o modo mock.');
+        }
+        
+        if (networkError.name === 'AbortError') {
+          throw new Error('⏱️ Timeout na conexão. Tente novamente.');
+        }
+        
+        throw networkError;
+      }
     },
     onSuccess: async (response) => {
-      // Get user details from token payload
+      // Process response from simple backend
       try {
-        const payload = JSON.parse(atob(response.token.split('.')[1]));
-        
-        // Mock user data based on the token payload
-        // In a real app, you'd get this from a separate endpoint
         const userData = {
-          id: payload.sub,
-          name: payload.email === 'admin@escola.com' ? 'Administrador' : 'Professor Demo',
-          email: payload.email || 'unknown',
-          role: payload.is_master ? 'admin' : 'user',
-          tenant_id: payload.tenant_id,
-          is_master: payload.is_master,
-          is_admin: payload.is_admin,
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          role: response.user.role,
+          tenant_id: response.user.tenant_id || response.user.unit_id, // Support both formats
+          is_master: response.user.is_master,
+          is_admin: response.user.is_admin,
         };
         
         login(response.token, userData);
@@ -92,19 +139,45 @@ export default function LoginForm() {
         
         navigate('/');
       } catch (error) {
-        console.error('Error parsing token:', error);
+        console.error('Error processing login response:', error);
         toast({
           title: 'Erro',
-          description: 'Erro ao processar token de autenticação',
+          description: 'Erro ao processar resposta do login',
           variant: 'destructive',
         });
       }
     },
     onError: (error: any) => {
       console.error('Login error:', error);
+      
+      // Determine user-friendly error message
+      let errorTitle = 'Erro no login';
+      let errorDescription = 'Email ou senha incorretos';
+      
+      if (error?.message) {
+        if (error.message.includes('Servidor indisponível')) {
+          errorTitle = 'Servidor Offline';
+          errorDescription = error.message;
+        } else if (error.message.includes('resposta inválida')) {
+          errorTitle = 'Erro de Comunicação';
+          errorDescription = error.message;
+        } else if (error.message.includes('Credenciais inválidas') || error.message.includes('Email ou senha')) {
+          errorTitle = 'Credenciais Incorretas';
+          errorDescription = 'Verifique seu email e senha e tente novamente.';
+        } else if (error.message.includes('Timeout')) {
+          errorTitle = 'Conexão Lenta';
+          errorDescription = error.message;
+        } else if (error.message.includes('Email e senha são obrigatórios')) {
+          errorTitle = 'Campos Obrigatórios';
+          errorDescription = 'Por favor, preencha email e senha.';
+        } else {
+          errorDescription = error.message;
+        }
+      }
+      
       toast({
-        title: 'Erro no login',
-        description: error?.message || 'Email ou senha incorretos',
+        title: errorTitle,
+        description: errorDescription,
         variant: 'destructive',
       });
     },

@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import UnitsTable from '../components/units/UnitsTable';
 import CreateUnitDialog from '../components/units/CreateUnitDialog';
 import EditUnitDialog from '../components/units/EditUnitDialog';
-import type { Unit } from '~backend/units/create';
+import type { Unit } from '../src/utils/mocks';
 import { useBackend } from '../hooks/useBackend';
 
 export default function Units() {

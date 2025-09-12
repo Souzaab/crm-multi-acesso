@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import backend from '~backend/client';
+import { useBackend } from '../../hooks/useBackend';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import type { CreateLeadRequest } from '~backend/leads/create';
-import type { Unit } from '~backend/units/create';
+import type { Lead } from '../../src/utils/mocks';
+import type { Unit } from '../../src/utils/mocks';
 
 interface CreateLeadDialogProps {
   open: boolean;
@@ -36,7 +36,7 @@ interface FormData {
   name: string;
   whatsapp_number: string;
   discipline: string;
-  age_group: string;
+  age: string;
   who_searched: string;
   origin_channel: string;
   interest_level: 'frio' | 'morno' | 'quente';
@@ -44,16 +44,22 @@ interface FormData {
   unit_id?: string;
 }
 
+interface CreateLeadRequest extends FormData {
+  tenant_id: string;
+  status: string;
+}
+
 export default function CreateLeadDialog({ open, onOpenChange, units, selectedTenantId }: CreateLeadDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const backend = useBackend();
   
   const form = useForm<FormData>({
     defaultValues: {
       name: '',
       whatsapp_number: '',
       discipline: '',
-      age_group: '',
+      age: '',
       who_searched: '',
       origin_channel: '',
       interest_level: 'morno',
@@ -225,7 +231,7 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
             
             <FormField
               control={form.control}
-              name="age_group"
+              name="age"
               rules={{ required: 'Faixa etária é obrigatória' }}
               render={({ field }) => (
                 <FormItem>

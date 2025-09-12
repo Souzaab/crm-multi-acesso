@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, Shield, User } from 'lucide-react';
+import { Users, Shield, User as UserIcon } from 'lucide-react';
 import type { User } from '~backend/users/create';
 import type { Unit } from '~backend/units/create';
 
@@ -46,7 +46,7 @@ export default function UsersTable({ users, units, isLoading }: UsersTableProps)
     
     return (
       <Badge className="bg-blue-900/50 text-blue-300 border-blue-500/30">
-        <User className="h-3 w-3 mr-1" />
+        <UserIcon className="h-3 w-3 mr-1" />
         Usuário
       </Badge>
     );

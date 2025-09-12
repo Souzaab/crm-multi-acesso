@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login Master</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #28a745;
+        }
+        .danger {
+            background: #dc3545;
+        }
+        .info {
+            background: #17a2b8;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teste de Login Master - TenantSelector</h1>
+        
+        <div class="result" id="status">Status: Aguardando ação...</div>
+        
+        <h3>Ações:</h3>
+        <button onclick="loginAsMaster()">1. Login como Master</button>
+        <button onclick="checkAuthState()">2. Verificar Estado de Auth</button>
+        <button onclick="testUnitsAPI()">3. Testar API de Unidades</button>
+        <button onclick="goToApp()">4. Ir para o App</button>
+        <button onclick="clearAuth()" class="danger">Limpar Autenticação</button>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `result ${type}`;
+        }
+        
+        function updateResult(content) {
+            document.getElementById('result').innerHTML = content;
+        }
+        
+        function loginAsMaster() {
+            updateStatus('Fazendo login como master...', 'info');
+            
+            const masterUser = {
+                id: '1',
+                name: 'Admin Master',
+                email: 'admin@escola.com',
+                role: 'admin',
+                tenant_id: '1',
+                is_master: true,
+                is_admin: true,
+                created_at: new Date().toISOString()
+            };
+            
+            const authData = {
+                state: {
+                    user: masterUser,
+                    token: 'mock-token-master',
+                    isAuthenticated: true
+                },
+                version: 0
+            };
+            
+            localStorage.setItem('auth-storage', JSON.stringify(authData));
+            updateStatus('✅ Login como master realizado com sucesso!', 'success');
+            updateResult(`<strong>Usuário logado:</strong><br><pre>${JSON.stringify(masterUser, null, 2)}</pre>`);
+        }
+        
+        function checkAuthState() {
+            updateStatus('Verificando estado de autenticação...', 'info');
+            
+            const authData = localStorage.getItem('auth-storage');
+            if (authData) {
+                const parsed = JSON.parse(authData);
+                updateStatus('✅ Usuário autenticado encontrado', 'success');
+                updateResult(`<strong>Estado de Auth:</strong><br><pre>${JSON.stringify(parsed, null, 2)}</pre>`);
+            } else {
+                updateStatus('❌ Nenhum usuário autenticado', 'danger');
+                updateResult('Nenhum dado de autenticação encontrado no localStorage.');
+            }
+        }
+        
+        async function testUnitsAPI() {
+            updateStatus('Testando API de unidades...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:4000/api/units', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ API de unidades funcionando!', 'success');
+                    updateResult(`<strong>Unidades encontradas:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                } else {
+                    updateStatus(`❌ Erro na API: ${response.status}`, 'danger');
+                    updateResult(`Status: ${response.status}<br>Texto: ${await response.text()}`);
+                }
+            } catch (error) {
+                updateStatus('❌ Erro ao conectar com a API', 'danger');
+                updateResult(`Erro: ${error.message}`);
+            }
+        }
+        
+        function goToApp() {
+            updateStatus('Redirecionando para o app...', 'info');
+            window.location.href = 'http://localhost:5174/';
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem('auth-storage');
+            updateStatus('🗑️ Autenticação limpa', 'info');
+            updateResult('Dados de autenticação removidos do localStorage.');
+        }
+        
+        // Verificar estado inicial
+        window.onload = function() {
+            checkAuthState();
+        };
+    </script>
+</body>
+</html>

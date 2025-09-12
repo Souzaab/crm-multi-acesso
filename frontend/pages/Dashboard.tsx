@@ -9,17 +9,21 @@ import MetricsCards from '../components/dashboard/MetricsCards';
 import MonthlyChart from '../components/dashboard/MonthlyChart';
 import ConvertedLeadsCard from '../components/dashboard/ConvertedLeadsCard';
 import ConversionChart from '../components/dashboard/ConversionChart';
-import DisciplineChart from '../components/dashboard/DisciplineChart';
+
 import DisciplineConversionChart from '../components/dashboard/DisciplineConversionChart';
+import DisciplinesPieChart from '../components/dashboard/DisciplinesPieChart';
+import DisciplinasChart from '../components/dashboard/DisciplinasChart';
 import PipelineChart from '../components/dashboard/PipelineChart';
-import RecentLeads from '../components/dashboard/RecentLeads';
 import CreateLeadDialog from '../components/leads/CreateLeadDialog';
 import { useBackend } from '../hooks/useBackend';
-import { useTenant } from '../App';
+import { useTenant } from '../contexts/TenantContext';
+import { useApiStatus } from '../src/services/apiService';
 
 export default function Dashboard() {
   const backend = useBackend();
   const { selectedTenantId } = useTenant();
+  const apiStatus = useApiStatus();
+  const isApiOffline = apiStatus === 'offline';
   const [isCreateLeadOpen, setIsCreateLeadOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('current_month');
 
@@ -198,6 +202,15 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {isApiOffline && (
+          <Alert variant="destructive" className="bg-red-900/50 border-red-500/50">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-red-200">
+              A conexão com o servidor está indisponível. Os dados exibidos são baseados em informações locais e podem não estar atualizados.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Period Info */}
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
           <div className="flex items-center justify-between">
@@ -216,38 +229,23 @@ export default function Dashboard() {
         {/* Metrics Cards */}
         <MetricsCards data={dashboardData} />
 
-        {/* Charts Grid - 3 columns on desktop, responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Charts Grid - Balanced layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Monthly Evolution */}
-          <div className="lg:col-span-2">
-            <div className="h-80">
-              <MonthlyChart data={dashboardData?.monthly_evolution || []} />
-            </div>
+          <div className="h-80">
+            <MonthlyChart data={dashboardData?.monthly_evolution || []} />
           </div>
           
           {/* Pipeline Chart */}
-          <div className="lg:col-span-1">
-            <div className="h-80">
-              <PipelineChart data={dashboardData?.pipeline_data || []} />
-            </div>
+          <div className="h-80">
+            <PipelineChart data={dashboardData?.pipeline_data || []} />
           </div>
         </div>
 
-        {/* Secondary Charts Grid - 3 equal columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Discipline Distribution */}
-          <div className="h-80">
-            <DisciplineChart data={dashboardData?.discipline_data || []} />
-          </div>
-          
-          {/* Recent Leads */}
-          <div className="h-80">
-            <RecentLeads leads={dashboardData?.recent_leads || []} />
-          </div>
-          
-          {/* Conversion Chart */}
-          <div className="h-80">
-            <ConversionChart data={dashboardData} />
+        {/* Discipline Chart - Centralized */}
+        <div className="flex justify-center">
+          <div className="w-full max-w-md h-80">
+            <DisciplinasChart data={dashboardData?.discipline_data || []} />
           </div>
         </div>
 

@@ -30,7 +30,7 @@ npm install -g bun
    encore run
    ```
 
-The backend will be available at the URL shown in your terminal (typically `http://localhost:4000`).
+The backend will be available at the URL shown in your terminal (typically `http://localhost:3001`).
 
 
 
@@ -46,7 +46,10 @@ The backend will be available at the URL shown in your terminal (typically `http
    npm install
    ```
 
-3. Start the development server:
+3. Configure environment variables:
+   - Ensure `VITE_API_URL=http://localhost:3001`
+
+4. Start the development server:
    ```bash
    npx vite dev
    ```

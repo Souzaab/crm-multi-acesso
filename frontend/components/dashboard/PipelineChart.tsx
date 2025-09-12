@@ -18,7 +18,9 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function PipelineChart({ data }: PipelineChartProps) {
-  const chartData = data.map(item => ({
+  // Verificação de segurança antes de usar .map()
+  const safeData = data || [];
+  const chartData = safeData.map(item => ({
     status: statusLabels[item.status] || item.status,
     count: item.count,
   }));
@@ -37,7 +39,7 @@ export default function PipelineChart({ data }: PipelineChartProps) {
     return null;
   };
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <Card className="bg-black border-blue-500/30 backdrop-blur-sm h-full">
         <CardHeader className="pb-2">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building, ChevronDown } from 'lucide-react';
-import type { Unit } from '~backend/units/create';
+import type { Unit } from '../src/utils/mocks';
 
 interface TenantSelectorProps {
   tenants: Unit[];

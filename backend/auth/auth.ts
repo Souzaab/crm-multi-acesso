@@ -20,7 +20,7 @@ export interface AuthData {
   is_admin: boolean;
 }
 
-const auth = authHandler<AuthParams, AuthData>(
+export const auth = authHandler<AuthParams, AuthData>(
   async (data) => {
     const key = jwtSecret();
     if (!key) {
@@ -64,7 +64,7 @@ const auth = authHandler<AuthParams, AuthData>(
         is_admin: user.is_admin,
       };
     } catch (err) {
-      throw APIError.unauthenticated("invalid token", err);
+      throw APIError.unauthenticated("invalid token", err instanceof Error ? err : undefined);
     }
   }
 );

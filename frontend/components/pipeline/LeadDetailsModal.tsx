@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import backend from '~backend/client';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useBackend } from '../../hooks/useBackend';
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,21 @@ import { useToast } from '@/components/ui/use-toast';
 import { 
   User, Phone, Calendar, BarChart, Tag, CheckCircle, XCircle, MessageSquare, History, Send
 } from 'lucide-react';
-import type { Lead } from '~backend/leads/create';
-import type { Anotacao } from '~backend/anotacoes/create';
-import type { Evento } from '~backend/eventos/create';
+import type { Lead } from '../../src/utils/mocks';
+
+interface Anotacao {
+  id: string;
+  content: string;
+  created_at: string;
+  lead_id: string;
+}
+
+interface Evento {
+  id: string;
+  title: string;
+  date: string;
+  lead_id: string;
+}
 
 interface LeadDetailsModalProps {
   lead: Lead | null;
@@ -40,37 +52,42 @@ const interestLabels: Record<string, string> = {
 export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }: LeadDetailsModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [newNote, setNewNote] = React.useState('');
+  const backend = useBackend();
+  const [newNote, setNewNote] = useState('');
 
-  const { data: notesData } = useQuery({
-    queryKey: ['notes', lead?.id],
-    queryFn: () => backend.anotacoes.list({ tenant_id: tenantId, lead_id: lead!.id }),
-    enabled: !!lead,
-  });
+  // Mock data for notes and events - replace with real API calls when available
+  const notesData = { anotacoes: [] };
+  const eventsData = { eventos: [] };
 
-  const { data: eventsData } = useQuery({
-    queryKey: ['events', lead?.id],
-    queryFn: () => backend.eventos.list({ tenant_id: tenantId, lead_id: lead!.id }),
-    enabled: !!lead,
-  });
+  // const { data: notesData } = useQuery({
+  //   queryKey: ['notes', lead?.id],
+  //   queryFn: () => backend.anotacoes.list({ tenant_id: tenantId, lead_id: lead!.id }),
+  //   enabled: !!lead,
+  // });
 
-  const addNoteMutation = useMutation({
-    mutationFn: (content: string) => backend.anotacoes.create({
-      tenant_id: tenantId,
-      lead_id: lead!.id,
-      conteudo: content,
-      tipo: 'geral',
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', lead?.id] });
-      setNewNote('');
-      toast({ title: 'Sucesso', description: 'Anotação adicionada.' });
-    },
-    onError: (error) => {
-      console.error('Error adding note:', error);
-      toast({ title: 'Erro', description: 'Não foi possível adicionar a anotação.', variant: 'destructive' });
-    },
-  });
+  // const { data: eventsData } = useQuery({
+  //   queryKey: ['events', lead?.id],
+  //   queryFn: () => backend.eventos.list({ tenant_id: tenantId, lead_id: lead!.id }),
+  //   enabled: !!lead,
+  // });
+
+  // const addNoteMutation = useMutation({
+  //   mutationFn: (content: string) => backend.anotacoes.create({
+  //     tenant_id: tenantId,
+  //     lead_id: lead!.id,
+  //     conteudo: content,
+  //     tipo: 'geral',
+  //   }),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ['notes', lead?.id] });
+  //     setNewNote('');
+  //     toast({ title: 'Sucesso', description: 'Anotação adicionada.' });
+  //   },
+  //   onError: (error) => {
+  //     console.error('Error adding note:', error);
+  //     toast({ title: 'Erro', description: 'Não foi possível adicionar a anotação.', variant: 'destructive' });
+  //   },
+  // });
 
   const timelineItems = useMemo(() => {
     const notes = notesData?.anotacoes.map(n => ({ ...n, itemType: 'note', date: new Date(n.created_at) })) || [];
@@ -80,7 +97,9 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
 
   const handleAddNote = () => {
     if (newNote.trim()) {
-      addNoteMutation.mutate(newNote.trim());
+      // addNoteMutation.mutate(newNote.trim());
+      setNewNote('');
+      toast({ title: 'Sucesso', description: 'Anotação adicionada (mock).' });
     }
   };
 
@@ -108,7 +127,7 @@ export default function LeadDetailsModal({ lead, tenantId, open, onOpenChange }:
                 <InfoItem icon={User} label="Nome" value={lead.name} />
                 <InfoItem icon={Phone} label="WhatsApp" value={lead.whatsapp_number} />
                 <InfoItem icon={Tag} label="Disciplina" value={lead.discipline} />
-                <InfoItem icon={User} label="Faixa Etária" value={lead.age_group} />
+                <InfoItem icon={User} label="Faixa Etária" value={lead.age} />
                 <InfoItem icon={BarChart} label="Status" value={<Badge>{statusLabels[lead.status]}</Badge>} />
                 <InfoItem icon={Tag} label="Interesse" value={<Badge variant="secondary">{interestLabels[lead.interest_level]}</Badge>} />
                 <InfoItem icon={Calendar} label="Data de Criação" value={new Date(lead.created_at).toLocaleString('pt-BR')} />

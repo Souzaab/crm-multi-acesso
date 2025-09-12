@@ -9,10 +9,12 @@ interface ConversionChartProps {
 
 export default function ConversionChart({ data }: ConversionChartProps) {
   // Generate conversion data by month for the last 6 months
-  const conversionData = data?.monthly_evolution.slice(-6).map((item, index) => ({
+  // Verificação de segurança antes de usar .slice()
+  const monthlyEvolution = data?.monthly_evolution || [];
+  const conversionData = monthlyEvolution.slice(-6).map((item, index) => ({
     month: new Date(item.month + '-01').toLocaleDateString('pt-BR', { month: 'short' }),
     percentage: item.total_leads > 0 ? ((item.converted_leads / item.total_leads) * 100) : 0,
-  })) || [];
+  }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

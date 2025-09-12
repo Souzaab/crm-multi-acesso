@@ -2,7 +2,7 @@ import React from 'react';
 import { Droppable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import PipelineCard from './PipelineCard';
-import type { Lead } from '~backend/leads/create';
+import type { Lead } from '../../src/utils/mocks';
 
 interface PipelineColumnProps {
   column: {

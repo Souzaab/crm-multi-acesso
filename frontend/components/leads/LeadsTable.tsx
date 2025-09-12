@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, Phone, Calendar } from 'lucide-react';
-import type { Lead } from '~backend/leads/create';
+import type { Lead } from '../../src/utils/mocks';
 
 export interface SortState {
   sortBy: 'name' | 'created_at' | 'status';

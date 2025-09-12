@@ -5,13 +5,14 @@
 /* jshint ignore:start */
 /*jslint-disable*/
 import type { CookieWithOptions } from "encore.dev/api";
+import { CONFIG } from './src/config/environment';
 
 /**
  * BaseURL is the base URL for calling the Encore application's API.
  */
 export type BaseURL = string
 
-export const Local: BaseURL = "http://localhost:4000"
+export const Local: BaseURL = CONFIG.API.BASE_URL
 
 /**
  * Environment returns a BaseURL for calling the cloud environment with the given name.
@@ -97,7 +98,7 @@ export class Client {
 /**
  * Import the auth handler to be able to derive the auth type
  */
-import type { auth as auth_auth } from "~backend/auth/auth";
+import { auth } from "~backend/auth/auth";
 
 /**
  * ClientOptions allows you to override any default behaviour within the generated Encore client.
@@ -118,7 +119,7 @@ export interface ClientOptions {
      * request either by passing in a static object or by passing in
      * a function which returns a new object for each request.
      */
-    auth?: RequestType<typeof auth_auth> | AuthDataGenerator
+    auth?: RequestType<typeof auth> | AuthDataGenerator
 }
 
 /**
@@ -237,7 +238,7 @@ export namespace database {
          */
         public async getDatabaseIntegration(): Promise<ResponseType<typeof api_database_integration_details_getDatabaseIntegration>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/database/integration-info`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/database/integration-info`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_database_integration_details_getDatabaseIntegration>
         }
     }
@@ -267,7 +268,7 @@ export namespace diagnostics {
          */
         public async testConnectivity(): Promise<ResponseType<typeof api_diagnostics_connectivity_testConnectivity>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/diagnostics/connectivity`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/diagnostics/connectivity`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_connectivity_testConnectivity>
         }
 
@@ -276,7 +277,7 @@ export namespace diagnostics {
          */
         public async testPerformance(): Promise<ResponseType<typeof api_diagnostics_performance_testPerformance>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/diagnostics/performance`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/diagnostics/performance`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_performance_testPerformance>
         }
 
@@ -285,7 +286,7 @@ export namespace diagnostics {
          */
         public async testSecurity(): Promise<ResponseType<typeof api_diagnostics_security_testSecurity>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/diagnostics/security`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/diagnostics/security`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_diagnostics_security_testSecurity>
         }
     }
@@ -313,7 +314,7 @@ export namespace eventos {
          */
         public async create(params: RequestType<typeof api_eventos_create_create>): Promise<ResponseType<typeof api_eventos_create_create>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/eventos`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/eventos`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_eventos_create_create>
         }
 
@@ -330,7 +331,7 @@ export namespace eventos {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/eventos`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/eventos`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_eventos_list_list>
         }
     }
@@ -382,7 +383,7 @@ export namespace integration {
          */
         public async testSupabaseIntegration(): Promise<ResponseType<typeof api_integration_supabase_testSupabaseIntegration>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/integration/supabase`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/integration/supabase`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_integration_supabase_testSupabaseIntegration>
         }
     }
@@ -414,7 +415,7 @@ export namespace leads {
          */
         public async create(params: RequestType<typeof api_leads_create_create>): Promise<ResponseType<typeof api_leads_create_create>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/leads`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/leads`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_create_create>
         }
 
@@ -423,7 +424,7 @@ export namespace leads {
          */
         public async deleteLead(params: { id: string }): Promise<ResponseType<typeof api_leads_delete_deleteLead>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/leads/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/leads/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_delete_deleteLead>
         }
 
@@ -443,7 +444,7 @@ export namespace leads {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/leads`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/leads`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_list_list>
         }
 
@@ -468,7 +469,7 @@ export namespace leads {
             }
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/leads/${encodeURIComponent(params.id)}`, {method: "PUT", body: JSON.stringify(body)})
+            const resp = await this.baseClient.callTypedAPI(`/api/leads/${encodeURIComponent(params.id)}`, {method: "PUT", body: JSON.stringify(body)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_leads_update_update>
         }
     }
@@ -496,7 +497,7 @@ export namespace matriculas {
          */
         public async create(params: RequestType<typeof api_matriculas_create_create>): Promise<ResponseType<typeof api_matriculas_create_create>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/matriculas`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/matriculas`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_matriculas_create_create>
         }
 
@@ -513,7 +514,7 @@ export namespace matriculas {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/matriculas`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/matriculas`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_matriculas_list_list>
         }
     }
@@ -547,7 +548,7 @@ export namespace metrics {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/metrics/dashboard`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/metrics/dashboard`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_metrics_dashboard_getDashboard>
         }
     }
@@ -581,7 +582,7 @@ export namespace reports {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/reports`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/reports`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_reports_get_getReports>
         }
     }
@@ -609,7 +610,7 @@ export namespace test {
          */
         public async listTables(): Promise<ResponseType<typeof api_test_tables_listTables>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/test/tables`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/test/tables`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_test_tables_listTables>
         }
 
@@ -618,7 +619,7 @@ export namespace test {
          */
         public async testConnection(): Promise<ResponseType<typeof api_test_connection_testConnection>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/test/connection`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/test/connection`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_test_connection_testConnection>
         }
     }
@@ -646,7 +647,7 @@ export namespace tools {
          */
         public async runMaintenance(): Promise<ResponseType<typeof api_tools_maintenance_runMaintenance>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/tools/maintenance`, {method: "POST", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/tools/maintenance`, {method: "POST", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_tools_maintenance_runMaintenance>
         }
 
@@ -655,7 +656,7 @@ export namespace tools {
          */
         public async setupTools(): Promise<ResponseType<typeof api_tools_setup_setupTools>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/tools/setup`, {method: "POST", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/tools/setup`, {method: "POST", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_tools_setup_setupTools>
         }
     }
@@ -687,7 +688,7 @@ export namespace units {
          */
         public async create(params: RequestType<typeof api_units_create_create>): Promise<ResponseType<typeof api_units_create_create>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/units`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/units`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_units_create_create>
         }
 
@@ -695,7 +696,7 @@ export namespace units {
          * Deletes a unit (Master only).
          */
         public async deleteUnit(params: { id: string }): Promise<void> {
-            await this.baseClient.callTypedAPI(`/units/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
+            await this.baseClient.callTypedAPI(`/api/units/${encodeURIComponent(params.id)}`, {method: "DELETE", body: undefined})
         }
 
         /**
@@ -703,7 +704,7 @@ export namespace units {
          */
         public async list(): Promise<ResponseType<typeof api_units_list_list>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/units`, {method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/units/list`, {method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_units_list_list>
         }
 
@@ -719,7 +720,7 @@ export namespace units {
             }
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/units/${encodeURIComponent(params.id)}`, {method: "PUT", body: JSON.stringify(body)})
+            const resp = await this.baseClient.callTypedAPI(`/api/units/${encodeURIComponent(params.id)}`, {method: "PUT", body: JSON.stringify(body)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_units_update_update>
         }
     }
@@ -751,7 +752,7 @@ export namespace users {
          */
         public async create(params: RequestType<typeof api_users_create_create>): Promise<ResponseType<typeof api_users_create_create>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/users`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/users`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_create_create>
         }
 
@@ -765,7 +766,7 @@ export namespace users {
             })
 
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/users`, {query, method: "GET", body: undefined})
+            const resp = await this.baseClient.callTypedAPI(`/api/users`, {query, method: "GET", body: undefined})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_list_list>
         }
 
@@ -774,7 +775,7 @@ export namespace users {
          */
         public async login(params: RequestType<typeof api_users_login_login>): Promise<ResponseType<typeof api_users_login_login>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/users/login`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/users/login`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_login_login>
         }
 
@@ -783,7 +784,7 @@ export namespace users {
          */
         public async register(params: RequestType<typeof api_users_register_register>): Promise<ResponseType<typeof api_users_register_register>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/users/register`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/users/register`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_users_register_register>
         }
     }
@@ -809,7 +810,7 @@ export namespace whatsapp {
          */
         public async webhook(params: RequestType<typeof api_whatsapp_webhook_webhook>): Promise<ResponseType<typeof api_whatsapp_webhook_webhook>> {
             // Now make the actual call to the API
-            const resp = await this.baseClient.callTypedAPI(`/whatsapp/webhook`, {method: "POST", body: JSON.stringify(params)})
+            const resp = await this.baseClient.callTypedAPI(`/api/whatsapp/webhook`, {method: "POST", body: JSON.stringify(params)})
             return JSON.parse(await resp.text(), dateReviver) as ResponseType<typeof api_whatsapp_webhook_webhook>
         }
     }
@@ -1071,8 +1072,8 @@ type CallParameters = Omit<RequestInit, "headers"> & {
 
 // AuthDataGenerator is a function that returns a new instance of the authentication data required by this API
 export type AuthDataGenerator = () =>
-  | RequestType<typeof auth_auth>
-  | Promise<RequestType<typeof auth_auth> | undefined>
+  | RequestType<typeof auth>
+  | Promise<RequestType<typeof auth> | undefined>
   | undefined;
 
 // A fetcher is the prototype for the inbuilt Fetch function
@@ -1118,7 +1119,7 @@ class BaseClient {
     }
 
     async getAuthData(): Promise<CallParameters | undefined> {
-        let authData: RequestType<typeof auth_auth> | undefined;
+        let authData: RequestType<typeof auth> | undefined;
 
         // If authorization data generator is present, call it and add the returned data to the request
         if (this.authGenerator) {
@@ -1546,4 +1547,4 @@ export enum ErrCode {
     Unauthenticated = "unauthenticated",
 }
 
-export default new Client(import.meta.env.VITE_CLIENT_TARGET, { requestInit: { credentials: "include" } });
+export default new Client(CONFIG.API.CLIENT_TARGET, { requestInit: { credentials: "include" } });
