@@ -145,7 +145,6 @@ export default function CreateLeadDialog({ open, onOpenChange, units, selectedTe
     createLeadMutation.mutate({
       ...data,
       tenant_id: selectedTenantId,
-      status: 'novo_lead',
     });
   };
 

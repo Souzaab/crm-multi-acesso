@@ -24,7 +24,13 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30000, // 30 seconds
       refetchOnWindowFocus: false,
-      retry: 3,
+      retry: (failureCount, error: any) => {
+        // Don't retry if it's an authentication error
+        if (error?.message?.includes('token') || error?.message?.includes('auth')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
     },
   },
 });
@@ -32,18 +38,42 @@ const queryClient = new QueryClient({
 
 
 function AuthenticatedApp() {
-  const { user, isMaster } = useAuth();
+  const { user, isMaster, checkTokenExpiry, logout } = useAuth();
   const backend = useBackend();
   const [selectedTenantId, setSelectedTenantId] = React.useState<string>(user?.tenant_id || '');
+
+  // Periodically check token validity
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkTokenExpiry();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [checkTokenExpiry]);
 
   const { data: unitsData, isLoading: isLoadingUnits, error: unitsError } = useQuery({
     queryKey: ['units'],
     queryFn: () => backend.units.list(),
-    retry: 2,
-    retryDelay: 1000,
+    retry: (failureCount, error: any) => {
+      // If authentication fails, logout and don't retry
+      if (error?.message?.includes('token') || error?.message?.includes('auth')) {
+        console.error('Authentication error in units query, logging out');
+        logout();
+        return false;
+      }
+      return failureCount < 3;
+    },
     enabled: isMaster(), // Only masters can list units
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Handle authentication errors from units query
+  useEffect(() => {
+    if (unitsError && (unitsError.message?.includes('token') || unitsError.message?.includes('auth'))) {
+      console.error('Units query failed with auth error, logging out');
+      logout();
+    }
+  }, [unitsError, logout]);
 
   React.useEffect(() => {
     if (user?.tenant_id && !selectedTenantId) {
@@ -146,7 +176,12 @@ function AuthenticatedApp() {
 }
 
 export default function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, checkTokenExpiry } = useAuth();
+
+  // Check authentication state on app load
+  useEffect(() => {
+    checkTokenExpiry();
+  }, [checkTokenExpiry]);
 
   useEffect(() => {
     // Force dark theme for now - let users control this later
@@ -164,7 +199,11 @@ export default function App() {
           />
           <Route 
             path="/*" 
-            element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" />} 
+            element={
+              <ProtectedRoute>
+                <AuthenticatedApp />
+              </ProtectedRoute>
+            } 
           />
         </Routes>
         <Toaster />

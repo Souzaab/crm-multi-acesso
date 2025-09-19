@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +38,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, checkTokenExpiry } = useAuth();
 
   const form = useForm<LoginFormData>({
     defaultValues: {
@@ -46,6 +46,14 @@ export default function LoginForm() {
       password: '',
     },
   });
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    checkTokenExpiry(); // Validate current token
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate, checkTokenExpiry]);
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
@@ -130,6 +138,9 @@ export default function LoginForm() {
           is_admin: response.user.is_admin,
         };
         
+        console.log('Setting auth state with user data:', userData);
+        
+        // Set auth state
         login(response.token, userData);
         
         toast({
@@ -137,7 +148,162 @@ export default function LoginForm() {
           description: `Bem-vindo, ${userData.name}!`,
         });
         
+        // Navigate to home page
         navigate('/');
+      } catch (error) {
+        console.error('❌ Erro ao processar resposta do login:', error);
+        throw new Error('Erro ao processar dados do usuário');
+      }
+    },
+    onError: (error: any) => {
+      console.error('❌ Erro no login:', error);
+      
+      let errorMessage = 'Erro desconhecido ao fazer login';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      toast({
+        title: 'Erro no login',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const onSubmit = (data: LoginFormData) => {
+    loginMutation.mutate(data);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm shadow-2xl">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <LogIn className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-white">
+              CRM Multi-Acesso
+            </CardTitle>
+            <CardDescription className="text-slate-300">
+              Faça login para acessar o sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="seu@email.com"
+                          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                          disabled={loginMutation.isPending}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-200">Senha</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Sua senha"
+                            className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 pr-10"
+                            disabled={loginMutation.isPending}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                            disabled={loginMutation.isPending}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 transition-all duration-200 transform hover:scale-[1.02]"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Entrando...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <LogIn className="w-4 h-4" />
+                      Entrar
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </Form>
+            
+            {/* Sample credentials info */}
+            {shouldUseMockAuth() && (
+              <div className="mt-6 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                <h3 className="text-sm font-medium text-slate-200 mb-2">🔧 Modo Desenvolvimento</h3>
+                <p className="text-xs text-slate-300 mb-3">Credenciais de teste disponíveis:</p>
+                <div className="space-y-2">
+                  {sampleCredentials.map((cred, index) => (
+                    <div key={index} className="text-xs text-slate-400">
+                      <strong className="text-slate-300">{cred.role}:</strong> {cred.email} / {cred.password}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+        
+        console.log('Setting auth state with user data:', userData);
+        
+        // Set auth state
+        login(response.token, userData);
+        
+        toast({
+          title: 'Login realizado com sucesso',
+          description: `Bem-vindo, ${userData.name}!`,
+        });
+        
+        // Navigate to home page
+        navigate('/');
+        
       } catch (error) {
         console.error('Error processing login response:', error);
         toast({
@@ -150,6 +316,7 @@ export default function LoginForm() {
     onError: (error: any) => {
       console.error('Login error:', error);
       
+<<<<<<< HEAD:frontend/src/components/auth/LoginForm.tsx
       // Determine user-friendly error message
       let errorTitle = 'Erro no login';
       let errorDescription = 'Email ou senha incorretos';
@@ -172,18 +339,43 @@ export default function LoginForm() {
           errorDescription = 'Por favor, preencha email e senha.';
         } else {
           errorDescription = error.message;
+=======
+      let errorMessage = 'Email ou senha incorretos';
+      
+      if (error?.message) {
+        if (error.message.includes('token')) {
+          errorMessage = 'Erro de autenticação. Tente novamente.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet.';
+        } else {
+          errorMessage = error.message;
+>>>>>>> 03442db88f22541e78d2a7c7ef558e3a5c471863:frontend/components/auth/LoginForm.tsx
         }
       }
       
       toast({
+<<<<<<< HEAD:frontend/src/components/auth/LoginForm.tsx
         title: errorTitle,
         description: errorDescription,
+=======
+        title: 'Erro no login',
+        description: errorMessage,
+>>>>>>> 03442db88f22541e78d2a7c7ef558e3a5c471863:frontend/components/auth/LoginForm.tsx
         variant: 'destructive',
       });
     },
   });
 
   const onSubmit = (data: LoginFormData) => {
+    if (!data.email || !data.password) {
+      toast({
+        title: 'Erro',
+        description: 'Por favor, preencha todos os campos',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     loginMutation.mutate(data);
   };
 
