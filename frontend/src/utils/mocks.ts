@@ -12,13 +12,19 @@ export interface Unit {
 }
 
 export interface Lead {
-  id: number;
+  id: string;
   name: string;
   email?: string;
   phone?: string;
+  whatsapp_number: string;
   unit_id?: number;
-  status?: 'new' | 'contacted' | 'qualified' | 'converted';
+  status?: string;
+  discipline: string;
+  interest_level?: string;
+  source?: string;
+  attended?: boolean;
   created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -56,31 +62,64 @@ export const mockUnits: Unit[] = [
  */
 export const mockLeads: Lead[] = [
   {
-    id: 1,
+    id: "1",
     name: "João Silva",
     email: "joao@exemplo.com",
     phone: "(11) 9999-1111",
+    whatsapp_number: "11999991111",
     unit_id: 1,
-    status: "new",
-    created_at: new Date().toISOString()
+    status: "novo_lead",
+    discipline: "Matemática",
+    interest_level: "quente",
+    source: "WhatsApp",
+    attended: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   },
   {
-    id: 2,
+    id: "2",
     name: "Maria Santos",
     email: "maria@exemplo.com",
     phone: "(11) 9999-2222",
+    whatsapp_number: "11999992222",
     unit_id: 2,
-    status: "contacted",
-    created_at: new Date(Date.now() - 86400000).toISOString() // 1 dia atrás
+    status: "agendado",
+    discipline: "Física",
+    interest_level: "morno",
+    source: "Instagram",
+    attended: false,
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString()
   },
   {
-    id: 3,
+    id: "3",
     name: "Pedro Oliveira",
     email: "pedro@exemplo.com",
     phone: "(11) 9999-3333",
+    whatsapp_number: "11999993333",
     unit_id: 1,
-    status: "qualified",
-    created_at: new Date(Date.now() - 172800000).toISOString() // 2 dias atrás
+    status: "compareceu",
+    discipline: "Química",
+    interest_level: "quente",
+    source: "Google",
+    attended: true,
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date(Date.now() - 172800000).toISOString()
+  },
+  {
+    id: "4",
+    name: "Ana Costa",
+    email: "ana@exemplo.com",
+    phone: "(11) 9999-4444",
+    whatsapp_number: "11999994444",
+    unit_id: 1,
+    status: "em_espera",
+    discipline: "Biologia",
+    interest_level: "frio",
+    source: "Facebook",
+    attended: false,
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    updated_at: new Date(Date.now() - 259200000).toISOString()
   }
 ];
 

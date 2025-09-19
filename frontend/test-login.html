@@ -121,7 +121,7 @@
             updateStatus('Testando API de unidades...', 'info');
             
             try {
-                const response = await fetch('http://localhost:4000/api/units', {
+                const response = await fetch(`${window.location.protocol}//${window.location.hostname}:4000/api/units`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'

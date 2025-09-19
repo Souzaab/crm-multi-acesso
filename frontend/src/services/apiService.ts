@@ -3,6 +3,7 @@
  * Esta camada intermediária garante que o CRM nunca trave por falta de backend
  */
 
+import * as React from 'react';
 import { safeFetch } from '../utils/safeFetch';
 import { 
   mockUnits, 
@@ -264,23 +265,103 @@ export class LeadsService {
   }
 
   /**
+   * Cria um novo lead (método de instância)
+   */
+  async create(leadData: any): Promise<any> {
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (this.token) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+      }
+      
+      const apiData = await safeFetch<any>(`${API_BASE_URL}/api/leads`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(leadData)
+      });
+      
+      if (apiData) {
+        console.log('✅ LeadsService: Lead criado na API');
+        return apiData;
+      }
+      
+      // Em modo mock, simula criação
+      console.log('⚠️ LeadsService: API não disponível, simulando criação');
+      const newLead: Lead = {
+        id: Math.max(...mockLeads.map(l => l.id)) + 1,
+        created_at: new Date().toISOString(),
+        ...leadData
+      };
+      mockLeads.push(newLead);
+      return newLead;
+      
+    } catch (error) {
+      console.warn('❌ LeadsService: Erro ao criar lead:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza um lead existente (método de instância)
+   */
+  async update(updateData: any): Promise<any> {
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (this.token) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+      }
+      
+      const apiData = await safeFetch<any>(`${API_BASE_URL}/api/leads/${updateData.id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(updateData)
+      });
+      
+      if (apiData) {
+        console.log('✅ LeadsService: Lead atualizado na API');
+        return apiData;
+      }
+      
+      // Em modo mock, simula atualização
+      console.log('⚠️ LeadsService: API não disponível, simulando atualização');
+      const leadIndex = mockLeads.findIndex(l => l.id === updateData.id);
+      if (leadIndex !== -1) {
+        mockLeads[leadIndex] = { ...mockLeads[leadIndex], ...updateData, updated_at: new Date().toISOString() };
+        return mockLeads[leadIndex];
+      }
+      
+      throw new Error('Lead não encontrado');
+      
+    } catch (error) {
+      console.warn('❌ LeadsService: Erro ao atualizar lead:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Lista todos os leads (método estático - mantido para compatibilidade)
    */
   static async getLeads(): Promise<Lead[]> {
     try {
       const apiData = await safeFetch<Lead[]>(`${API_BASE_URL}/api/leads`);
       
-      if (apiData && Array.isArray(apiData) && apiData.length > 0) {
+      if (apiData && Array.isArray(apiData)) {
         console.log('✅ LeadsService: Dados carregados da API');
         return apiData;
       }
       
-      console.log('⚠️ LeadsService: API não disponível, usando mocks');
-      return await getMockLeads();
+      console.log('⚠️ LeadsService: API não disponível, retornando array vazio');
+      return [];
       
     } catch (error) {
-      console.warn('❌ LeadsService: Erro ao buscar leads, usando mocks:', error);
-      return await getMockLeads();
+      console.warn('❌ LeadsService: Erro ao buscar leads, retornando array vazio:', error);
+      return [];
     }
   }
 
@@ -296,12 +377,12 @@ export class LeadsService {
         return apiData;
       }
       
-      console.log(`⚠️ LeadsService: API não disponível para leads da unidade ${unitId}, usando mocks`);
-      return await getMockLeadsByUnit(unitId);
+      console.log(`⚠️ LeadsService: API não disponível para leads da unidade ${unitId}, retornando array vazio`);
+      return [];
       
     } catch (error) {
-      console.warn(`❌ LeadsService: Erro ao buscar leads da unidade ${unitId}, usando mocks:`, error);
-      return await getMockLeadsByUnit(unitId);
+      console.warn(`❌ LeadsService: Erro ao buscar leads da unidade ${unitId}, retornando array vazio:`, error);
+      return [];
     }
   }
 
@@ -384,6 +465,3 @@ export function useApiStatus() {
 
   return status;
 }
-
-// Importação do React para o hook
-import * as React from 'react';

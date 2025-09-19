@@ -1,7 +1,6 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "dev": "node server-unified.cjs",
     "start": "node server-unified.cjs",
@@ -9,12 +8,15 @@
     "test": "echo 'Tests passed'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.3",
+    "@google-cloud/local-auth": "^3.0.1",
+    "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "encore.dev": "^1.50.0",
     "express": "^5.1.0",
-    "jose": "^6.0.11"
+    "googleapis": "^159.0.0",
+    "jose": "^6.1.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

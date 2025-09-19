@@ -1,6 +1,5 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-// import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -10,10 +9,11 @@ export default defineConfig(({ mode }) => {
   
   return {
     base: '/',
-    plugins: [react()], // tailwindcss()
+    plugins: [react()]
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
+        '~backend': path.resolve(__dirname, '.'),
         '~backend/client': path.resolve(__dirname, 'client.ts'),
       },
     },
@@ -24,8 +24,12 @@ export default defineConfig(({ mode }) => {
           target: apiUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, '/api'),
         },
+        '/health': {
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,
+        }
       },
     },
   }

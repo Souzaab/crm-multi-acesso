@@ -2,8 +2,26 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const { createClient } = require('@supabase/supabase-js');
 
-const PORT = 4000;
+// Carregar variáveis de ambiente
+require('dotenv').config();
+
+// Configurar Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Teste isolado das variáveis de ambiente
+console.log('=== TESTE DE VARIÁVEIS DE AMBIENTE ===');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'DEFINIDO' : 'NÃO DEFINIDO');
+console.log('PORT:', process.env.PORT || 'NÃO DEFINIDO');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'NÃO DEFINIDO');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'DEFINIDO' : 'NÃO DEFINIDO');
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL || 'NÃO DEFINIDO');
+console.log('=====================================');
+
+const PORT = process.env.PORT || 4000;
 const FRONTEND_DIR = path.join(__dirname, '../frontend/dist');
 
 // CORS headers
@@ -114,7 +132,7 @@ const mockResponses = {
   ]
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
 
@@ -183,29 +201,98 @@ const server = http.createServer((req, res) => {
         body += chunk.toString();
       });
       
-      req.on('end', () => {
+      req.on('end', async () => {
         try {
           const leadData = JSON.parse(body);
           
-          // Create new lead with mock ID
-          const newLead = {
-            id: Date.now(), // Simple ID generation
-            ...leadData,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
+          // Salvar no Supabase
+          const { data: newLead, error } = await supabase
+            .from('leads')
+            .insert([
+              {
+                name: leadData.name,
+                whatsapp_number: leadData.whatsapp_number,
+                discipline: leadData.discipline,
+                age_group: leadData.age || leadData.age_group,
+                who_searched: leadData.who_searched,
+                origin_channel: leadData.origin_channel,
+                interest_level: leadData.interest_level || 'morno',
+                observations: leadData.observations || '',
+                unit_id: leadData.unit_id || '550e8400-e29b-41d4-a716-446655440001',
+                tenant_id: leadData.tenant_id || '550e8400-e29b-41d4-a716-446655440001',
+                status: leadData.status || 'novo_lead'
+              }
+            ])
+            .select()
+            .single();
           
-          console.log('✅ Lead criado:', newLead);
-          
-          res.writeHead(201);
-          res.end(JSON.stringify({ success: true, lead: newLead }));
+          if (error) {
+            console.error('❌ Erro ao salvar lead no Supabase:', error);
+            // Fallback para mock se Supabase falhar
+            const mockLead = {
+              id: Date.now(),
+              ...leadData,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            console.log('✅ Lead criado (mock):', mockLead);
+            res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, lead: mockLead }));
+          } else {
+            console.log('✅ Lead criado no Supabase:', newLead);
+            res.writeHead(201, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, lead: newLead }));
+          }
         } catch (error) {
-          console.error('❌ Erro ao criar lead:', error);
-          res.writeHead(400);
+          console.error('❌ Erro ao processar lead:', error);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid JSON data' }));
         }
       });
       
+      return;
+    }
+    
+    // Get leads endpoint
+    if (pathname === '/api/leads' && req.method === 'GET') {
+      try {
+        const { data: leads, error } = await supabase
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('❌ Erro ao buscar leads do Supabase:', error);
+          // Fallback para mock se Supabase falhar
+          const mockLeads = [
+            {
+              id: 1,
+              name: 'Lead Mock',
+              whatsapp_number: '(11) 99999-9999',
+              discipline: 'Português',
+              age_group: 'Infantil (0-12 anos)',
+              who_searched: 'Própria pessoa',
+              origin_channel: 'WhatsApp',
+              interest_level: 'morno',
+              status: 'novo_lead',
+              unit_id: '550e8400-e29b-41d4-a716-446655440001',
+              tenant_id: '550e8400-e29b-41d4-a716-446655440001',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ];
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ leads: mockLeads }));
+        } else {
+          console.log(`✅ ${leads.length} leads encontrados no Supabase`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ leads: leads || [] }));
+        }
+      } catch (error) {
+        console.error('❌ Erro ao processar busca de leads:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      }
       return;
     }
     

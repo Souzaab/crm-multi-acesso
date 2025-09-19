@@ -523,7 +523,7 @@ export namespace matriculas {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
-import { getDashboard as api_metrics_dashboard_getDashboard } from "~backend/metrics/dashboard";
+import { getDashboard as api_metrics_dashboard_getDashboard } from './client.ts';
 
 export namespace metrics {
 
@@ -557,7 +557,7 @@ export namespace metrics {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
-import { getReports as api_reports_get_getReports } from "~backend/reports/get";
+import { getReports as api_reports_get_getReports } from './client.ts';
 
 export namespace reports {
 
@@ -665,10 +665,10 @@ export namespace tools {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
-import { create as api_units_create_create } from "~backend/units/create";
+import { create as api_units_create_create } from './client.ts';
 import { deleteUnit as api_units_delete_deleteUnit } from "~backend/units/delete";
 import { list as api_units_list_list } from "~backend/units/list";
-import { update as api_units_update_update } from "~backend/units/update";
+import { update as api_units_update_update } from './client.ts';
 
 export namespace units {
 
@@ -729,7 +729,7 @@ export namespace units {
 /**
  * Import the endpoint handlers to derive the types for the client.
  */
-import { create as api_users_create_create } from "~backend/users/create";
+import { create as api_users_create_create } from './client.ts';
 import { list as api_users_list_list } from "~backend/users/list";
 import { login as api_users_login_login } from "~backend/users/login";
 import { register as api_users_register_register } from "~backend/users/register";

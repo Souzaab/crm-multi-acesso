@@ -3,7 +3,7 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT || 4000;
 
 // CORS headers
 const corsHeaders = {
@@ -107,6 +107,18 @@ const server = http.createServer((req, res) => {
     
     // Health check (sem prefixo para compatibilidade)
     if (pathname === '/health' && method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        status: 'OK', 
+        message: 'Backend funcionando',
+        port: PORT,
+        timestamp: new Date().toISOString()
+      }));
+      return;
+    }
+
+    // Health check com prefixo /api/
+    if (pathname === '/api/health' && method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ 
         status: 'OK', 
